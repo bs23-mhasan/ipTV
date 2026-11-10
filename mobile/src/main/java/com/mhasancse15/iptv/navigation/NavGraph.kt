@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tv
@@ -43,6 +44,7 @@ object NavGraph {
     const val SETTINGS = "settings"
     const val ABOUT = "about"
     const val PLAYER = "player"
+    const val RECENT = "recent"
 
     @Composable
     fun BdixNavigation(
@@ -81,6 +83,7 @@ object NavGraph {
             Triple(HOME, "Home", Icons.Default.Home),
             Triple(ALL_CHANNELS, "Channels", Icons.Default.LiveTv),
             Triple(FAVORITES, "Favorites", Icons.Default.Favorite),
+            Triple(RECENT, "Recent", Icons.Default.History),
             Triple(TV_GUIDE, "Guide", Icons.Default.Tv),
             Triple(SETTINGS, "Settings", Icons.Default.Settings)
         )
@@ -158,6 +161,18 @@ object NavGraph {
                         onChannelClick = ::openChannel,
                         onFavoriteClick = viewModel::toggleFavorite,
                         onClearAll = viewModel::clearFavorites
+                    )
+                }
+                composable(RECENT) {
+                    val recentlyWatched = (channelState as? com.mhasancse15.iptv.data.repository.ChannelUiState.Success)
+                        ?.recentChannels.orEmpty()
+                    AllChannelsScreen(
+                        channels = recentlyWatched,
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = viewModel::updateSearchQuery,
+                        onChannelClick = ::openChannel,
+                        onFavoriteClick = viewModel::toggleFavorite,
+                        title = "Recently Watched"
                     )
                 }
                 composable(SEARCH) {

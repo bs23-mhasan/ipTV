@@ -51,9 +51,15 @@ fun AllChannelsScreen(
     selectedCountry: String = "All",
     onCategoryChange: (String) -> Unit = {},
     onCountryChange: (String) -> Unit = {},
+    title: String = "All Channels",
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
     Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
         // Search bar
         TextField(
             value = searchQuery,

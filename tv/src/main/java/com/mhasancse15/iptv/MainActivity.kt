@@ -7,7 +7,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -313,8 +312,7 @@ private fun TvChannelCard(
         modifier = Modifier
             .width(220.dp)
             .height(190.dp)
-            .onFocusChanged { focused = it.isFocused }
-            .focusable(),
+            .onFocusChanged { focused = it.isFocused },
         shape = RoundedCornerShape(18.dp),
         border = if (focused) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
         colors = CardDefaults.cardColors(containerColor = Color(0xFF18181F))

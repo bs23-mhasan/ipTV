@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 "Dark" -> true
                 else -> systemDark
             }
-            IPTVTheme(darkTheme = darkTheme) {
+            IPTVTheme(darkTheme = darkTheme, dynamicColor = false) {
                 NavGraph.BdixNavigation(viewModel = viewModel)
             }
         }
