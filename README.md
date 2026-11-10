@@ -36,6 +36,23 @@ APK outputs:
 - Mobile: `mobile/build/outputs/apk/debug/mobile-debug.apk`
 - Android TV: `tv/build/outputs/apk/debug/tv-debug.apk`
 
+## Build release APKs
+
+Build both release APKs from the repository root:
+
+```bash
+./gradlew :mobile:assembleRelease :tv:assembleRelease
+```
+
+The APK files are generated here:
+
+- Mobile: `mobile/build/outputs/apk/release/mobile-release-unsigned.apk`
+- Android TV: `tv/build/outputs/apk/release/tv-release-unsigned.apk`
+
+These Gradle release outputs are unsigned and are not ready to install or distribute. To create signed APKs, open the project in Android Studio and select **Build → Generate Signed Bundle / APK → APK**. Choose the `mobile` or `tv` module, then sign with your release keystore. Keep the keystore and passwords private and backed up; the same signing key is needed for future app updates.
+
+To publish APKs for direct download, upload the signed APKs to a GitHub Release (or another trusted distribution site) and add the download links here. This repository does not currently provide hosted APK download links.
+
 Open the repository root in Android Studio to run either application on a device or emulator. The TV app declares the Leanback launcher category; touch input is optional.
 
 ## Project layout
