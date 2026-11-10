@@ -87,6 +87,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
@@ -674,6 +675,7 @@ private fun TvChannelCard(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 private fun TvPlayer(
     channel: TvChannel
@@ -691,8 +693,10 @@ private fun TvPlayer(
             )
             .build()
     }
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
     var playbackError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(channel.id) {
+        playerView?.hideController()
         playbackError = null
         exoPlayer.playWhenReady = false
         exoPlayer.stop()
@@ -739,6 +743,14 @@ private fun TvPlayer(
                 PlayerView(viewContext).apply {
                     player = exoPlayer
                     useController = true
+                    setControllerAutoShow(false)
+                    isLongClickable = true
+                    setOnLongClickListener {
+                        showController()
+                        true
+                    }
+                    hideController()
+                    playerView = this
                 }
             },
             modifier = Modifier.fillMaxSize()
