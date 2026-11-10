@@ -1,5 +1,6 @@
 package com.mhasancse15.iptv
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
@@ -185,7 +186,6 @@ class MainActivity : ComponentActivity() {
                     loading = loading,
                     error = error,
                     onRefresh = ::refresh,
-                    onBackFromPlayer = { selectedIndex = -1 },
                     onToggleFavorite = { channel ->
                         favorites = favorites.toMutableSet().apply {
                             if (!add(channel.id)) remove(channel.id)
@@ -202,6 +202,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN && playerChannelKeyHandler?.invoke(event.keyCode) == true) {
             return true
@@ -223,14 +224,12 @@ private fun TvExperience(
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
-    onBackFromPlayer: () -> Unit,
     onToggleFavorite: (TvChannel) -> Unit,
     onSelectChannel: (TvChannel) -> Unit
 ) {
     if (selectedChannel != null) {
         TvPlayer(
-            channel = selectedChannel,
-            onBack = onBackFromPlayer
+            channel = selectedChannel
         )
         return
     }
@@ -423,8 +422,7 @@ private fun TvChannelCard(
 
 @Composable
 private fun TvPlayer(
-    channel: TvChannel,
-    onBack: () -> Unit
+    channel: TvChannel
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -465,14 +463,11 @@ private fun TvPlayer(
         }
     }
     Column(Modifier.fillMaxSize().background(Color.Black)) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(onClick = onBack) { Text("Back") }
-            Text(channel.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-        }
+        Text(
+            channel.name,
+            modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.titleLarge
+        )
         AndroidView(
             factory = { viewContext ->
                 PlayerView(viewContext).apply {
