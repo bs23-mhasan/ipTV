@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "8.8.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -9,14 +9,16 @@ activityCompose = "1.8.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
 appcompat = "1.6.1"
-tvFoundation = "1.0.0-alpha07"
-tvMaterial = "1.0.0-alpha07"
+tvFoundation = "1.0.0"
+tvMaterial = "1.0.0"
 
 # Media3
 media3 = "1.11.1"
 
 # Hilt
-hilt = "2.48"
+hilt = "2.51"
+hiltCompiler = "2.51"
+hiltAndroidTesting = "2.51"
 
 # Retrofit / OkHttp
 retrofit = "2.9.0"
@@ -66,8 +68,8 @@ androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.re
 
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
-hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
-hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hiltCompiler" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hiltAndroidTesting" }
 
 # Retrofit / OkHttp
 retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }

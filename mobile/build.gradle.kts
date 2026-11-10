@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.mhasancse15.iptv"
-    compileSdk { version = 37 }
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.mhasancse15.iptv"
         minSdk = 24
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    kapt(libs.hilt.compiler)
     implementation(libs.okhttp3.logging.interceptor)
     implementation(libs.retrofit2.retrofit)
     implementation(libs.retrofit2.converter.gson)
@@ -78,4 +79,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    kapt(libs.hilt.compiler)
 }
