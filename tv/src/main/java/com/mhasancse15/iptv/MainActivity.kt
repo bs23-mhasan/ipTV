@@ -80,6 +80,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -676,7 +678,15 @@ private fun TvPlayer(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build()
+        ExoPlayer.Builder(context)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                false
+            )
+            .build()
     }
     var playbackError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(channel.id) {
