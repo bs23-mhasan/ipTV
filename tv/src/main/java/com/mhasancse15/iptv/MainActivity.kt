@@ -1,6 +1,7 @@
 package com.mhasancse15.iptv
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -39,7 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -85,6 +88,8 @@ private data class TvChannel(
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var playerChannelKeyHandler: ((Int) -> Boolean)? = null
+
     private val client by lazy {
         OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
@@ -103,7 +108,20 @@ class MainActivity : ComponentActivity() {
                 var favorites by remember { mutableStateOf(savedFavorites) }
                 var loading by remember { mutableStateOf(channels.isEmpty()) }
                 var error by remember { mutableStateOf<String?>(null) }
-                var selected by remember { mutableStateOf<TvChannel?>(null) }
+                var selectedIndex by remember { mutableIntStateOf(-1) }
+                val selected = channels.getOrNull(selectedIndex)
+
+                fun selectAdjacentChannel(offset: Int) {
+                    val current = channels.getOrNull(selectedIndex) ?: return
+                    val sectionChannels = channels.filter { it.homeSection() == current.homeSection() }
+                    val sectionIndex = sectionChannels.indexOfFirst { it.id == current.id }
+                    if (sectionIndex >= 0 && sectionChannels.isNotEmpty()) {
+                        val next = sectionChannels[
+                            (sectionIndex + offset + sectionChannels.size) % sectionChannels.size
+                        ]
+                        selectedIndex = channels.indexOfFirst { it.id == next.id }
+                    }
+                }
 
                 fun refresh() {
                     lifecycleScope.launch {
@@ -139,7 +157,27 @@ class MainActivity : ComponentActivity() {
                     refresh()
                 }
 
-                BackHandler(selected != null) { selected = null }
+                SideEffect {
+                    playerChannelKeyHandler = if (selectedIndex < 0) null else { keyCode ->
+                        when (keyCode) {
+                            KeyEvent.KEYCODE_CHANNEL_DOWN,
+                            KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                selectAdjacentChannel(-1)
+                                true
+                            }
+                            KeyEvent.KEYCODE_CHANNEL_UP,
+                            KeyEvent.KEYCODE_MEDIA_NEXT,
+                            KeyEvent.KEYCODE_DPAD_UP -> {
+                                selectAdjacentChannel(1)
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                }
+
+                BackHandler(selectedIndex >= 0) { selectedIndex = -1 }
                 TvExperience(
                     channels = channels,
                     favorites = favorites,
@@ -147,7 +185,7 @@ class MainActivity : ComponentActivity() {
                     loading = loading,
                     error = error,
                     onRefresh = ::refresh,
-                    onBackFromPlayer = { selected = null },
+                    onBackFromPlayer = { selectedIndex = -1 },
                     onToggleFavorite = { channel ->
                         favorites = favorites.toMutableSet().apply {
                             if (!add(channel.id)) remove(channel.id)
@@ -155,10 +193,25 @@ class MainActivity : ComponentActivity() {
                         getSharedPreferences("bdix_tv", MODE_PRIVATE).edit()
                             .putStringSet("favorite_ids", favorites).apply()
                     },
-                    onSelectChannel = { channel -> selected = channel }
+                    onSelectChannel = { channel ->
+                        val index = channels.indexOf(channel)
+                        if (index >= 0) selectedIndex = index
+                    }
                 )
             }
         }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && playerChannelKeyHandler?.invoke(event.keyCode) == true) {
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onDestroy() {
+        playerChannelKeyHandler = null
+        super.onDestroy()
     }
 }
 
@@ -177,15 +230,7 @@ private fun TvExperience(
     if (selectedChannel != null) {
         TvPlayer(
             channel = selectedChannel,
-            onBack = onBackFromPlayer,
-            onPrevious = {
-                val current = channels.indexOfFirst { it.id == selectedChannel.id }
-                if (current > 0) onSelectChannel(channels[current - 1])
-            },
-            onNext = {
-                val current = channels.indexOfFirst { it.id == selectedChannel.id }
-                if (current in 0 until channels.lastIndex) onSelectChannel(channels[current + 1])
-            }
+            onBack = onBackFromPlayer
         )
         return
     }
@@ -214,7 +259,7 @@ private fun TvExperience(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Live television for your screen",
+                        "Bangladesh  •  Indian Bangla  •  Other",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -247,19 +292,12 @@ private fun TvExperience(
                 TvChannelRow("Favorites", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
             }
         }
-        val categories = filtered.map { it.category }.filter(String::isNotBlank).distinct().sorted()
-        if (categories.isEmpty() && filtered.isNotEmpty()) {
-            item { TvChannelRow("Channels", filtered, favorites, onSelectChannel, onToggleFavorite) }
-        } else {
-            categories.forEach { category ->
-                item(key = category) {
-                    TvChannelRow(
-                        category,
-                        filtered.filter { it.category == category },
-                        favorites,
-                        onSelectChannel,
-                        onToggleFavorite
-                    )
+
+        TvChannelSection.entries.forEach { section ->
+            val sectionChannels = filtered.filter { it.homeSection() == section }
+            if (sectionChannels.isNotEmpty()) {
+                item(key = section.title) {
+                    TvChannelRow(section.title, sectionChannels, favorites, onSelectChannel, onToggleFavorite)
                 }
             }
         }
@@ -273,6 +311,30 @@ private fun TvExperience(
                 )
             }
         }
+    }
+}
+
+private enum class TvChannelSection(val title: String) {
+    BANGLADESH("Bangladesh"),
+    INDIAN_BANGLA("Indian Bangla"),
+    OTHER("Other")
+}
+
+private fun TvChannel.homeSection(): TvChannelSection {
+    val searchable = "${category.lowercase()} ${name.lowercase()}"
+    val indianBanglaBrands = listOf(
+        "zee bangla", "star jalsha", "jalsha movies", "colors bangla", "sun bangla",
+        "abp ananda", "aakash aath", "ruposhi bangla", "sangeet bangla", "kolkata tv",
+        "khushboo bangla", "sananda tv", "r plus", "news18 bangla"
+    )
+    val hasBanglaLabel = listOf("bangla", "bengali", "বাংলা").any(searchable::contains)
+    val hasIndianLabel = listOf("india", "indian", "kolkata", "west bengal").any(searchable::contains)
+    return when {
+        indianBanglaBrands.any(searchable::contains) ||
+            (hasBanglaLabel && hasIndianLabel) -> TvChannelSection.INDIAN_BANGLA
+        hasBanglaLabel || searchable.contains("bangladesh") || searchable.contains("bangladeshi") ->
+            TvChannelSection.BANGLADESH
+        else -> TvChannelSection.OTHER
     }
 }
 
@@ -362,9 +424,7 @@ private fun TvChannelCard(
 @Composable
 private fun TvPlayer(
     channel: TvChannel,
-    onBack: () -> Unit,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -374,6 +434,9 @@ private fun TvPlayer(
     var playbackError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(channel.id) {
         playbackError = null
+        exoPlayer.playWhenReady = false
+        exoPlayer.stop()
+        exoPlayer.clearMediaItems()
         exoPlayer.setMediaItem(MediaItem.fromUri(channel.url))
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
@@ -409,8 +472,6 @@ private fun TvPlayer(
         ) {
             Button(onClick = onBack) { Text("Back") }
             Text(channel.name, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-            Button(onClick = onPrevious) { Text("Previous") }
-            Button(onClick = onNext) { Text("Next") }
         }
         AndroidView(
             factory = { viewContext ->
