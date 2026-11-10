@@ -51,7 +51,10 @@ The APK files are generated here:
 
 These Gradle release outputs are unsigned and are not ready to install or distribute. To create signed APKs, open the project in Android Studio and select **Build → Generate Signed Bundle / APK → APK**. Choose the `mobile` or `tv` module, then sign with your release keystore. Keep the keystore and passwords private and backed up; the same signing key is needed for future app updates.
 
-To publish APKs for direct download, upload the signed APKs to a GitHub Release (or another trusted distribution site) and add the download links here. This repository does not currently provide hosted APK download links.
+## Download
+
+- [Download Android TV release APK](https://github.com/bs23-mhasan/ipTV/raw/refs/heads/master/tv/release/tv-release.apk)
+- Mobile release APK: no download link available yet.
 
 Open the repository root in Android Studio to run either application on a device or emulator. The TV app declares the Leanback launcher category; touch input is optional.
 
