@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Close
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.domain.model.Channel
 
@@ -54,6 +55,13 @@ fun SearchScreen(
                 .padding(16.dp),
             placeholder = {
                 Text("Search channels by name, category, or country...")
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { onSearchQueryChange("") }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear search")
+                    }
+                }
             },
             singleLine = true
         )

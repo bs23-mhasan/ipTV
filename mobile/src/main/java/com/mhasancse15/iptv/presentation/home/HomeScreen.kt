@@ -14,12 +14,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.mhasancse15.iptv.presentation.BdixViewModel
 import com.mhasancse15.iptv.data.repository.ChannelUiState
 import com.mhasancse15.iptv.presentation.home.components.*
@@ -27,7 +25,7 @@ import com.mhasancse15.iptv.presentation.home.components.*
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier.fillMaxSize(),
-    viewModel: BdixViewModel = hiltViewModel(),
+    viewModel: BdixViewModel,
     onChannelClick: (String) -> Unit,
     onFavoriteClick: (String) -> Unit,
     onSearchClick: () -> Unit,
@@ -35,13 +33,7 @@ fun HomeScreen(
     onCategoryClick: (String) -> Unit,
     onCountryClick: (String) -> Unit
 ) {
-    val uiState = viewModel.uiState.value
-
-    LaunchedEffect(Unit) {
-        if (uiState is ChannelUiState.Loading) {
-            viewModel.refresh()
-        }
-    }
+    val uiState = viewModel.uiState.collectAsState().value
 
     when (uiState) {
         is ChannelUiState.Loading -> {
@@ -78,6 +70,16 @@ fun HomeScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
+                uiState.warning?.let { warning ->
+                    item {
+                        Text(
+                            text = warning,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
                 // Header
                 item {
                     HomeHeader(

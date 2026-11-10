@@ -61,6 +61,12 @@ fun PlayerOverlay(
                 .padding(16.dp)
         ) {
             Text(
+                text = "LIVE",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
                 text = channel?.name ?: "Unknown",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -69,11 +75,13 @@ fun PlayerOverlay(
                 overflow = TextOverflow.Ellipsis
             )
 
-            Text(
-                text = channel?.category ?: "",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            channel?.category?.takeIf(String::isNotBlank)?.let { category ->
+                Text(
+                    text = category,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Control buttons

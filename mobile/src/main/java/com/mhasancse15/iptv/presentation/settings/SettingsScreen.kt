@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -37,10 +36,10 @@ fun SettingsScreen(
     onRefreshPlaylist: () -> Unit,
     onClearCache: () -> Unit,
     onEpgRefresh: () -> Unit,
-    onThemeChange: (String) -> Unit
+    onThemeChange: (String) -> Unit,
+    themePreference: String,
+    onAboutClick: () -> Unit
 ) {
-    var isDarkTheme by remember { mutableStateOf(true) }
-    var autoPlayNext by remember { mutableStateOf(true) }
     var expanded by remember { mutableStateOf(false) }
 
     val themes = listOf("System", "Light", "Dark")
@@ -100,35 +99,6 @@ fun SettingsScreen(
             }
         }
 
-        // Playback settings
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Playback",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                ListItem(
-                    headlineContent = { Text("Auto Play Next Channel") },
-                    trailingContent = {
-                        Switch(
-                            checked = autoPlayNext,
-                            onCheckedChange = { autoPlayNext = it }
-                        )
-                    }
-                )
-            }
-        }
-
         // Theme settings
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -148,7 +118,7 @@ fun SettingsScreen(
 
                 Box {
                     TextField(
-                        value = themes[if (isDarkTheme) 2 else 1],
+                        value = themePreference,
                         onValueChange = { },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Theme") },
@@ -170,7 +140,6 @@ fun SettingsScreen(
                                 text = { Text(theme) },
                                 onClick = {
                                     onThemeChange(theme)
-                                    isDarkTheme = theme == "Dark"
                                     expanded = false
                                 }
                             )
@@ -231,7 +200,8 @@ fun SettingsScreen(
 
                 ListItem(
                     headlineContent = { Text("BDIX TV") },
-                    supportingContent = { Text("Version ${BuildConfig.VERSION_NAME}") }
+                    supportingContent = { Text("Version ${BuildConfig.VERSION_NAME}") },
+                    modifier = Modifier.clickable(onClick = onAboutClick)
                 )
 
                 ListItem(

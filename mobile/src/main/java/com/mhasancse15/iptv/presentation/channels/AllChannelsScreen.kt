@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.FilterChip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Close
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.domain.model.Channel
 
@@ -42,6 +45,12 @@ fun AllChannelsScreen(
     onSearchQueryChange: (String) -> Unit,
     onChannelClick: (Channel) -> Unit,
     onFavoriteClick: (String) -> Unit,
+    categories: List<String> = emptyList(),
+    countries: List<String> = emptyList(),
+    selectedCategory: String = "All",
+    selectedCountry: String = "All",
+    onCategoryChange: (String) -> Unit = {},
+    onCountryChange: (String) -> Unit = {},
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
     Column(modifier = modifier) {
@@ -55,8 +64,44 @@ fun AllChannelsScreen(
             placeholder = {
                 Text("Search channels...")
             },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { onSearchQueryChange("") }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear search")
+                    }
+                }
+            },
             singleLine = true
         )
+
+        if (categories.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(categories) { category ->
+                    FilterChip(
+                        selected = selectedCategory == category,
+                        onClick = { onCategoryChange(category) },
+                        label = { Text(category) }
+                    )
+                }
+            }
+        }
+        if (countries.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(countries) { country ->
+                    FilterChip(
+                        selected = selectedCountry == country,
+                        onClick = { onCountryChange(country) },
+                        label = { Text(country) }
+                    )
+                }
+            }
+        }
 
         if (channels.isEmpty()) {
             Box(

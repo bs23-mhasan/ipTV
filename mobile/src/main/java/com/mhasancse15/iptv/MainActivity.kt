@@ -4,13 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.mhasancse15.iptv.navigation.NavGraph
 import com.mhasancse15.iptv.presentation.BdixViewModel
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
@@ -22,30 +19,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            IPTVTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            val viewModel: BdixViewModel = hiltViewModel()
+            val themePreference by viewModel.themePreference.collectAsState()
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themePreference) {
+                "Light" -> false
+                "Dark" -> true
+                else -> systemDark
+            }
+            IPTVTheme(darkTheme = darkTheme) {
+                NavGraph.BdixNavigation(viewModel = viewModel)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    IPTVTheme {
-        Greeting("Android")
     }
 }

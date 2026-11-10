@@ -9,90 +9,76 @@ object M3uParser {
 
     fun parse(m3uContent: String): List<Channel> {
         val channels = mutableListOf<Channel>()
-        val reader = BufferedReader(StringReader(m3uContent))
-        var line: String? = reader.readLine()
-
         var tvgId = ""
         var tvgName = ""
         var logoUrl = ""
-        var groupTitle = "General"
+        var category = ""
+        var country = ""
         var channelName = ""
 
-        while (line != null) {
-            val trimmed = line.trim()
-            if (trimmed.startsWith("#EXTINF:")) {
-                // Parse attributes
-                tvgId = extractAttribute(trimmed, "tvg-id")
-                tvgName = extractAttribute(trimmed, "tvg-name")
-                logoUrl = extractAttribute(trimmed, "tvg-logo")
-                groupTitle = extractAttribute(trimmed, "group-title").ifEmpty { "General" }
-
-                // Extract display name (after the last comma)
-                val commaIndex = trimmed.lastIndexOf(',')
-                if (commaIndex != -1 && commaIndex < trimmed.length - 1) {
-                    channelName = trimmed.substring(commaIndex + 1).trim()
+        BufferedReader(StringReader(m3uContent)).useLines { lines ->
+            lines.forEach { rawLine ->
+                val line = rawLine.trim()
+                if (line.startsWith("#EXTINF:", ignoreCase = true)) {
+                    tvgId = extractAttribute(line, "tvg-id")
+                    tvgName = extractAttribute(line, "tvg-name")
+                    logoUrl = extractAttribute(line, "tvg-logo")
+                    category = extractAttribute(line, "group-title")
+                    country = extractAttribute(line, "tvg-country")
+                        .ifEmpty { extractAttribute(line, "country") }
+                    val commaIndex = displayNameSeparator(line)
+                    channelName = if (commaIndex >= 0) line.substring(commaIndex + 1).trim() else ""
+                } else if (line.isNotEmpty() && !line.startsWith("#")) {
+                    val streamUrl = line
+                    if (channelName.isNotBlank() && isSupportedUrl(streamUrl)) {
+                        val stableId = tvgId.ifBlank {
+                            UUID.nameUUIDFromBytes("$channelName\n$streamUrl".toByteArray(Charsets.UTF_8)).toString()
+                        }
+                        channels += Channel(
+                            id = stableId,
+                            name = channelName,
+                            streamUrl = streamUrl,
+                            logoUrl = logoUrl,
+                            category = category,
+                            country = country,
+                            tvgId = tvgId,
+                            tvgName = tvgName
+                        )
+                    }
+                    tvgId = ""
+                    tvgName = ""
+                    logoUrl = ""
+                    category = ""
+                    country = ""
+                    channelName = ""
                 }
-            } else if (trimmed.isNotEmpty() && !trimmed.startsWith("#")) {
-                // This is the stream URL
-                val streamUrl = trimmed
-                if (channelName.isEmpty()) {
-                    channelName = "Channel ${channels.size + 1}"
-                }
-
-                val stableId = tvgId.ifEmpty {
-                    // Fallback to normalized name + URL hash if no tvg-id
-                    if (channelName.isNotEmpty()) channelName.lowercase().replace("\\s+".toRegex(), "_")
-                    else UUID.nameUUIDFromBytes(streamUrl.toByteArray()).toString()
-                }
-
-                // Determine country based on group or name if possible, default to Bangladesh
-                val country = determineCountry(groupTitle, channelName)
-
-                channels.add(
-                    Channel(
-                        id = stableId,
-                        name = channelName,
-                        streamUrl = streamUrl,
-                        logoUrl = logoUrl,
-                        category = groupTitle,
-                        country = country,
-                        tvgId = tvgId,
-                        tvgName = tvgName.ifEmpty { channelName }
-                    )
-                )
-
-                // Reset for next channel
-                tvgId = ""
-                tvgName = ""
-                logoUrl = ""
-                groupTitle = "General"
-                channelName = ""
             }
-            line = reader.readLine()
         }
-        return channels
+        return channels.distinctBy { it.id }
     }
 
-    private fun extractAttribute(extinf: String, attr: String): String {
-        val pattern = "$attr=\"([^\"]*)\"".toRegex()
-        val match = pattern.find(extinf)
-        if (match != null) {
-            return match.groupValues[1]
+    private fun displayNameSeparator(line: String): Int {
+        var insideQuotes = false
+        line.forEachIndexed { index, char ->
+            when (char) {
+                '"' -> insideQuotes = !insideQuotes
+                ',' -> if (!insideQuotes) return index
+            }
         }
-        // Try without quotes
-        val patternNoQuotes = "$attr=([^\\s,]*)".toRegex()
-        val matchNoQuotes = patternNoQuotes.find(extinf)
-        return matchNoQuotes?.groupValues?.get(1) ?: ""
+        return -1
     }
 
-    private fun determineCountry(group: String, name: String): String {
-        val lowerGroup = group.lowercase()
-        val lowerName = name.lowercase()
-        return when {
-            lowerGroup.contains("india") || lowerName.contains("india") || lowerGroup.contains("hindi") || lowerGroup.contains("bengali india") -> "India"
-            lowerGroup.contains("bd") || lowerGroup.contains("bangladesh") || lowerName.contains("bd") -> "Bangladesh"
-            lowerGroup.contains("sports") || lowerGroup.contains("news") || lowerGroup.contains("movies") -> "Bangladesh" // Default major group to BD for BDIX
-            else -> "International"
-        }
+    private fun extractAttribute(extinf: String, attribute: String): String {
+        val pattern = Regex("""(?:^|\s)$attribute\s*=\s*(?:"([^"]*)"|([^,\s]*))""", RegexOption.IGNORE_CASE)
+        val match = pattern.find(extinf) ?: return ""
+        return match.groups[1]?.value ?: match.groups[2]?.value.orEmpty()
     }
+
+    private fun isSupportedUrl(value: String): Boolean =
+        try {
+            val uri = java.net.URI(value)
+            uri.scheme?.lowercase() in setOf("http", "https") && !uri.host.isNullOrBlank()
+        } catch (_: java.net.URISyntaxException) {
+            false
+        }
 }

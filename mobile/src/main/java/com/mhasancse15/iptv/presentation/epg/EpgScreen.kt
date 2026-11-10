@@ -27,10 +27,17 @@ import com.mhasancse15.iptv.domain.model.EpgProgrammeWithChannel
 fun EpgScreen(
     channels: List<Channel>,
     epgData: List<EpgProgrammeWithChannel>,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier.fillMaxSize()
 ) {
+    val now = System.currentTimeMillis()
+    val channelIds = channels.mapNotNull { it.tvgId.takeIf(String::isNotBlank)?.lowercase() }.toSet()
+    val visibleProgrammes = epgData
+        .filter { it.programme.channelId.lowercase() in channelIds && it.programme.stop > now }
+        .sortedBy { it.programme.start }
+
     Column(modifier = modifier) {
-        if (epgData.isEmpty()) {
+        if (visibleProgrammes.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -41,13 +48,15 @@ fun EpgScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "EPG Not Available",
+                        text = if (epgData.isEmpty()) "EPG Not Available" else "No Matching Programmes",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Text(
-                        text = "Programme guide data is not available",
+                        text = errorMessage
+                            ?: if (channels.isEmpty()) "Channel list is not available"
+                            else "No upcoming programmes match the channels' tvg-id metadata",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -58,7 +67,16 @@ fun EpgScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(epgData) { epg ->
+                if (errorMessage != null) {
+                    item {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+                items(visibleProgrammes) { epg ->
                     EpgProgrammeCard(epg = epg)
                 }
             }
@@ -88,7 +106,7 @@ fun EpgProgrammeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = epg.programme.title,
+                    text = "${if (epg.programme.start <= System.currentTimeMillis()) "NOW" else "UP NEXT"}  ${epg.programme.title}",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
