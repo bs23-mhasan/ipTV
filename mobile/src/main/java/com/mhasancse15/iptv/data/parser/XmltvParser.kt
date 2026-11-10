@@ -4,7 +4,7 @@ import com.mhasancse15.iptv.domain.model.EpgProgramme
 import com.mhasancse15.iptv.domain.model.EpgChannel
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
-import java.io.StringReader
+import java.io.ByteArrayInputStream
 
 object XmltvParser {
 
@@ -14,7 +14,7 @@ object XmltvParser {
 
         val factory = XmlPullParserFactory.newInstance()
         val parser = factory.newPullParser()
-        parser.setInput(StringReader(xmlContent), "UTF-8")
+        parser.setInput(ByteArrayInputStream(xmlContent.toByteArray(Charsets.UTF_8)), "UTF-8")
 
         var eventType = parser.eventType
         var currentChannelId = ""

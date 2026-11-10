@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.IPTV" parent="androidx.compose.ui.theme.Material3Light">
-        <item name="colorPrimary">@color/NetflixRed</item>
-        <item name="colorPrimaryDark">@color/NetflixDark</item>
-        <item name="colorOnPrimary">@color/NetflixWhite</item>
-        <item name="colorSurface">@color/NetflixDark</item>
-        <item name="colorOnSurface">@color/NetflixWhite</item>
-        <item name="colorBackground">@color/NetflixBlack</item>
-        <item name="colorOnBackground">@color/NetflixLight</item>
-        <item name="colorSecondary">@color/NetflixBlue</item>
-        <item name="colorSecondaryVariant">@color/NetflixDark</item>
-        <item name="colorOnSecondary">@color/NetflixWhite</item>
+    <style name="Theme.IPTV" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">@color/NetflixRed</item>
         <item name="android:statusBarColor">@color/NetflixBlack</item>
         <item name="android:navigationBarColor">@color/NetflixBlack</item>
-        <item name="material3.android.theme.style.isLight">false</item>
+        <item name="android:windowBackground">@color/NetflixBlack</item>
     </style>
 
     <style name="Theme.IPTV.Player" parent="Theme.IPTV">
-        <item name="colorBackground">@color/NetflixBlack</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@color/NetflixBlack</item>
     </style>

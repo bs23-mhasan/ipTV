@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.mhasancse15.iptv.core"
-    compileSdk { version = 37 }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24

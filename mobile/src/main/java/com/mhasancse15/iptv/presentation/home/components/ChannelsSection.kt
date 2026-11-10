@@ -1,5 +1,7 @@
 package com.mhasancse15.iptv.presentation.home.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.mhasancse15.iptv.domain.model.Channel
 
 @Composable
-defun ChannelsSection(
+fun ChannelsSection(
     title: String,
     channels: List<Channel>,
     onChannelClick: (Channel) -> Unit,

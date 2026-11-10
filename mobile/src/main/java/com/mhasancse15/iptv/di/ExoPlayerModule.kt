@@ -2,8 +2,6 @@ package com.mhasancse15.iptv.di
 
 import android.content.Context
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.explayer.HlsMediaSource
-import androidx.media3.common.util.UnstableApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

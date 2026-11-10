@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.kotlin.kapt)
@@ -7,14 +8,12 @@ plugins {
 
 android {
     namespace = "com.mhasancse15.iptv"
-    compileSdk {
-        version = 37
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.mhasancse15.iptv"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -54,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

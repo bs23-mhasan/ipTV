@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExpandedDropdownMenu
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -24,6 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import com.mhasancse15.iptv.BuildConfig
 
 @Composable
 fun SettingsScreen(
@@ -67,8 +73,8 @@ fun SettingsScreen(
                 )
 
                 ListItem(
-                    headlineText = { Text("Refresh Playlist") },
-                    supportingText = { Text("Download latest channel list") },
+                    headlineContent = { Text("Refresh Playlist") },
+                    supportingContent = { Text("Download latest channel list") },
                     trailingContent = {
                         Text(
                             text = "Refresh",
@@ -80,8 +86,8 @@ fun SettingsScreen(
                 )
 
                 ListItem(
-                    headlineText = { Text("Clear Cache") },
-                    supportingText = { Text("Remove cached playlist and logos") },
+                    headlineContent = { Text("Clear Cache") },
+                    supportingContent = { Text("Remove cached playlist and logos") },
                     trailingContent = {
                         Text(
                             text = "Clear",
@@ -112,7 +118,7 @@ fun SettingsScreen(
                 )
 
                 ListItem(
-                    headlineText = { Text("Auto Play Next Channel") },
+                    headlineContent = { Text("Auto Play Next Channel") },
                     trailingContent = {
                         Switch(
                             checked = autoPlayNext,
@@ -146,11 +152,15 @@ fun SettingsScreen(
                         onValueChange = { },
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Theme") },
-                        trailingIcon = { /* Arrow icon */ },
-                        enabled = false,
+                        trailingIcon = {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Choose theme")
+                            }
+                        },
+                        readOnly = true,
                         singleLine = true
                     )
-                    ExpandedDropdownMenu(
+                    DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
                         modifier = Modifier.fillMaxWidth()
@@ -160,6 +170,7 @@ fun SettingsScreen(
                                 text = { Text(theme) },
                                 onClick = {
                                     onThemeChange(theme)
+                                    isDarkTheme = theme == "Dark"
                                     expanded = false
                                 }
                             )
@@ -187,8 +198,8 @@ fun SettingsScreen(
                 )
 
                 ListItem(
-                    headlineText = { Text("Refresh EPG") },
-                    supportingText = { Text("Download latest programme guide") },
+                    headlineContent = { Text("Refresh EPG") },
+                    supportingContent = { Text("Download latest programme guide") },
                     trailingContent = {
                         Text(
                             text = "Refresh",
@@ -219,13 +230,13 @@ fun SettingsScreen(
                 )
 
                 ListItem(
-                    headlineText = { Text("BDIX TV") },
-                    supportingText = { Text("Version ${BuildConfig.VERSION_NAME}") }
+                    headlineContent = { Text("BDIX TV") },
+                    supportingContent = { Text("Version ${BuildConfig.VERSION_NAME}") }
                 )
 
                 ListItem(
-                    headlineText = { Text("Playlist Sources") },
-                    supportingText = { Text("BDIX IPTV Repository") }
+                    headlineContent = { Text("Playlist Sources") },
+                    supportingContent = { Text("BDIX IPTV Repository") }
                 )
             }
         }

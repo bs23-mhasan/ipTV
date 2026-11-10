@@ -6,8 +6,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -17,6 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import coil.compose.AsyncImage
 import com.mhasancse15.iptv.domain.model.Channel
 
 @Composable
@@ -90,7 +106,7 @@ fun SearchScreen(
             }
         } else {
             LazyColumn(
-                contentPadding = Modifier.padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(channels) { channel ->
@@ -128,13 +144,17 @@ fun ChannelListItem(
             if (channel.logoUrl.isNotEmpty()) {
                 AsyncImage(
                     model = channel.logoUrl,
+                    contentDescription = channel.name,
                     modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = channel.name.take(2).uppercase(),
@@ -170,7 +190,7 @@ fun ChannelListItem(
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
-                    imageVector = if (channel.isFavorite) Icons.Default.Favorite else Icons.Default.NotFavorite,
+                    imageVector = if (channel.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = if (channel.isFavorite) "Remove from favorites" else "Add to favorites",
                     tint = if (channel.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )

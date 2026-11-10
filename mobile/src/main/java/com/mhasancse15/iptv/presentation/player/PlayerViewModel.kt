@@ -6,12 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.HlsMediaSource
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.ExoSource
 import com.mhasancse15.iptv.domain.model.Channel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -27,6 +22,8 @@ sealed class PlayerUiState {
 class PlayerViewModel @Inject constructor(
     private val exoPlayer: ExoPlayer
 ) : ViewModel() {
+    val player: ExoPlayer
+        get() = exoPlayer
 
     var uiState by mutableStateOf<PlayerUiState>(PlayerUiState.Idle)
         private set

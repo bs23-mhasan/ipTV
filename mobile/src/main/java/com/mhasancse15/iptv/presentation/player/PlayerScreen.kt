@@ -21,9 +21,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.domain.model.Channel
-import com.mhasancse15.iptv.ui.theme.Color
 
 @Composable
 fun PlayerScreen(
@@ -44,7 +44,7 @@ fun PlayerScreen(
         }
     }
 
-    val uiState = viewModel.uiState.value
+    val uiState = viewModel.uiState
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (uiState) {
@@ -71,6 +71,8 @@ fun PlayerScreen(
                     }
                 }
             }
+
+            PlayerUiState.Idle -> Unit
 
             is PlayerUiState.Error -> {
                 Box(
@@ -105,7 +107,7 @@ fun PlayerScreen(
             is PlayerUiState.Success -> {
                 // Video Player surface
                 ExoPlayerSurface(
-                    exoPlayer = viewModel.exoPlayer,
+                    exoPlayer = viewModel.player,
                     modifier = Modifier.fillMaxSize()
                 )
 

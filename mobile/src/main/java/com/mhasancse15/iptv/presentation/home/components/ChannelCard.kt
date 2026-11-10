@@ -8,8 +8,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -48,13 +56,17 @@ fun ChannelCard(
             if (channel.logoUrl.isNotEmpty()) {
                 AsyncImage(
                     model = channel.logoUrl,
+                    contentDescription = channel.name,
                     modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
-                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = channel.name.take(2).uppercase(),
@@ -95,10 +107,10 @@ fun ChannelCard(
             // Favorite button (overlay on top)
             IconButton(
                 onClick = onFavoriteClick,
-                modifier = Modifier.align(Alignment.TopEnd).size(32.dp)
+                modifier = Modifier.align(Alignment.End).size(32.dp)
             ) {
                 Icon(
-                    imageVector = if (channel.isFavorite) Icons.Default.Favorite else Icons.Default.NotFavorite,
+                    imageVector = if (channel.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = if (channel.isFavorite) "Remove from favorites" else "Add to favorites",
                     tint = if (channel.isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -50,7 +50,7 @@
     <string name="epg_not_available">EPG not available</string>
     <string name="no_programs">No programmes available</string>
     <string name="current_program">Current program</string>
-    <string name="next_program">Next program</nount>
+    <string name="next_program">Next program</string>
     <string name="program_start">Start:</string>
     <string name="program_end">End:</string>
     <string name="playback_error">Playback error</string>

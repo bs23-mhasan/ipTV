@@ -1,5 +1,7 @@
 package com.mhasancse15.iptv.presentation.home.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-defun CategoriesSection(
+fun CategoriesSection(
     categories: List<String>,
     onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)

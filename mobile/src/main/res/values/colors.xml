@@ -7,4 +7,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="NetflixRed">#FFE50914</color>
+    <color name="NetflixDark">#FF181818</color>
+    <color name="NetflixWhite">#FFFFFFFF</color>
+    <color name="NetflixBlack">#FF0B0B0B</color>
+    <color name="NetflixLight">#FFCCCCCC</color>
+    <color name="NetflixBlue">#FF0071EB</color>
 </resources>
