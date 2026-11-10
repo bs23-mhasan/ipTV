@@ -76,6 +76,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
@@ -713,20 +716,24 @@ private fun TvPlayer(
         }
         exoPlayer.addListener(listener)
         lifecycleOwner.lifecycle.addObserver(observer)
-        (context as? ComponentActivity)?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        val activity = context as? ComponentActivity
+        val window = activity?.window
+        val insetsController = window?.let {
+            WindowCompat.getInsetsController(it, it.decorView)
+        }
+        insetsController?.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        insetsController?.hide(WindowInsetsCompat.Type.systemBars())
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onDispose {
             exoPlayer.removeListener(listener)
             lifecycleOwner.lifecycle.removeObserver(observer)
-            (context as? ComponentActivity)?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            insetsController?.show(WindowInsetsCompat.Type.systemBars())
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             exoPlayer.release()
         }
     }
-    Column(Modifier.fillMaxSize().background(Color.Black)) {
-        Text(
-            channel.name,
-            modifier = Modifier.padding(horizontal = 28.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.titleLarge
-        )
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(
             factory = { viewContext ->
                 PlayerView(viewContext).apply {
@@ -734,16 +741,15 @@ private fun TvPlayer(
                     useController = true
                 }
             },
-            modifier = Modifier.weight(1f).fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         )
         playbackError?.let { message ->
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(message, color = MaterialTheme.colorScheme.error)
-                Spacer(Modifier.size(12.dp))
                 Button(onClick = {
                     playbackError = null
                     exoPlayer.prepare()
