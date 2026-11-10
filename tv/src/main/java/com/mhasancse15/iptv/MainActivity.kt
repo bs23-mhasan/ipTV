@@ -8,8 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +35,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +63,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
@@ -123,7 +133,11 @@ class MainActivity : ComponentActivity() {
 
                 fun selectAdjacentChannel(offset: Int) {
                     val current = channels.getOrNull(selectedIndex) ?: return
-                    val sectionChannels = channels.filter { it.homeSection() == current.homeSection() }
+                    val sectionChannels = if (current.id in favorites) {
+                        channels.filter { it.id in favorites }
+                    } else {
+                        channels.filter { it.homeSection() == current.homeSection() }
+                    }
                     val sectionIndex = sectionChannels.indexOfFirst { it.id == current.id }
                     if (sectionIndex >= 0 && sectionChannels.isNotEmpty()) {
                         val next = sectionChannels[
@@ -244,6 +258,15 @@ private fun TvExperience(
     }
 
     var query by remember { mutableStateOf("") }
+    var searchActive by remember { mutableStateOf(false) }
+    var searchButtonFocused by remember { mutableStateOf(false) }
+    val searchFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(searchActive) {
+        if (searchActive) searchFocusRequester.requestFocus()
+    }
+    BackHandler(enabled = searchActive) {
+        searchActive = false
+    }
     val context = LocalContext.current
     var currentTime by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
@@ -287,13 +310,56 @@ private fun TvExperience(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        label = { Text("Search channels") },
-                        singleLine = true,
-                        modifier = Modifier.width(300.dp)
-                    )
+                    if (searchActive) {
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            placeholder = { Text("Search channels") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Search, contentDescription = null)
+                            },
+                            trailingIcon = {
+                                IconButton(onClick = { searchActive = false }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Close search")
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(28.dp),
+                            modifier = Modifier
+                                .width(340.dp)
+                                .focusRequester(searchFocusRequester)
+                        )
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .width(300.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1A1F2C))
+                                .border(
+                                    width = if (searchButtonFocused) 2.dp else 1.dp,
+                                    color = if (searchButtonFocused) Color(0xFFADC6FF) else Color(0xFF424754),
+                                    shape = CircleShape
+                                )
+                                .onFocusChanged { searchButtonFocused = it.isFocused }
+                                .clickable { searchActive = true }
+                                .padding(horizontal = 18.dp, vertical = 13.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = null,
+                                tint = Color(0xFFADC6FF)
+                            )
+                            Text(
+                                if (query.isBlank()) "Search channels" else query,
+                                color = if (query.isBlank()) Color(0xFFC2C6D6) else Color(0xFFDEE2F3),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
                     IconButton(onClick = onRefresh, enabled = !loading) {
                         Icon(
                             Icons.Default.Refresh,
@@ -332,7 +398,7 @@ private fun TvExperience(
             val favoriteChannels = filtered.filter { it.id in favorites }
             if (favoriteChannels.isNotEmpty()) {
                 item {
-                    TvChannelRow("Favorites", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
+                    TvChannelRow("Favorite", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
                 }
             }
 
@@ -464,6 +530,7 @@ private fun TvChannelRow(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun TvChannelCard(
     channel: TvChannel,
     isFavorite: Boolean,
@@ -471,13 +538,13 @@ private fun TvChannelCard(
     onFavoriteClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    var favoriteMenuExpanded by remember { mutableStateOf(false) }
     val accentColors = listOf(
         Color(0xFF123D4A), Color(0xFF3B263A), Color(0xFF213B35),
         Color(0xFF3D3122), Color(0xFF29354B), Color(0xFF3A2630)
     )
     val accent = accentColors[Math.floorMod(channel.name.hashCode(), accentColors.size)]
     Card(
-        onClick = onClick,
         modifier = Modifier
             .width(320.dp)
             .height(180.dp)
@@ -485,8 +552,7 @@ private fun TvChannelCard(
                 val scale = if (focused) 1.04f else 1f
                 scaleX = scale
                 scaleY = scale
-            }
-            .onFocusChanged { focused = it.isFocused },
+            },
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(
             if (focused) 3.dp else 1.dp,
@@ -496,94 +562,109 @@ private fun TvChannelCard(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF161B28))
     ) {
         Box(Modifier.fillMaxSize()) {
-            if (channel.logo.isNotBlank()) {
-                AsyncImage(
-                    model = channel.logo,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().alpha(0.32f),
-                    contentScale = ContentScale.Crop
-                )
-            }
             Box(
-                Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            accent.copy(alpha = 0.38f),
-                            Color(0xB30E131F),
-                            Color(0xF2090E1A)
-                        )
+                Modifier
+                    .fillMaxSize()
+                    .onFocusChanged { focused = it.isFocused }
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = { favoriteMenuExpanded = true }
                     )
-                )
-            )
-            if (channel.logo.isNotBlank()) {
-                AsyncImage(
-                    model = channel.logo,
-                    contentDescription = channel.name,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(width = 136.dp, height = 76.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Text(
-                    channel.name.take(3).uppercase(),
-                    modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Color(0xFFADC6FF),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Row(
-                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFFFB4AB))
-                        .padding(horizontal = 9.dp, vertical = 5.dp)
-                ) {
-                    Text(
-                        "● LIVE",
-                        color = Color(0xFF690005),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.ExtraBold
+                if (channel.logo.isNotBlank()) {
+                    AsyncImage(
+                        model = channel.logo,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().alpha(0.32f),
+                        contentScale = ContentScale.Crop
                     )
                 }
-            }
-            IconButton(
-                onClick = onFavoriteClick,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xB3090E1A))
-            ) {
-                Icon(
-                    if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = if (isFavorite) "Remove favorite" else "Add favorite",
-                    tint = if (isFavorite) Color(0xFFFFB4AB) else Color(0xFFDEE2F3)
-                )
-            }
-            Text(
-                text = channel.name,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .background(
+                Box(
+                    Modifier.fillMaxSize().background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color(0xF2090E1A))
+                            colors = listOf(
+                                accent.copy(alpha = 0.38f),
+                                Color(0xB30E131F),
+                                Color(0xF2090E1A)
+                            )
                         )
                     )
-                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp, top = 30.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = if (focused) Color.White else Color(0xFFDEE2F3)
-            )
+                )
+                if (channel.logo.isNotBlank()) {
+                    AsyncImage(
+                        model = channel.logo,
+                        contentDescription = channel.name,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(width = 136.dp, height = 76.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text(
+                        channel.name.take(3).uppercase(),
+                        modifier = Modifier.align(Alignment.Center),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color(0xFFADC6FF),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Row(
+                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFFFFB4AB))
+                            .padding(horizontal = 9.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            "● LIVE",
+                            color = Color(0xFF690005),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+                Text(
+                    text = channel.name,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color(0xF2090E1A))
+                            )
+                        )
+                        .padding(start = 14.dp, end = 14.dp, bottom = 12.dp, top = 30.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (focused) Color.White else Color(0xFFDEE2F3)
+                )
+            }
+            DropdownMenu(
+                expanded = favoriteMenuExpanded,
+                onDismissRequest = { favoriteMenuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Text(if (isFavorite) "Remove from Favorite" else "Add to Favorite")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        favoriteMenuExpanded = false
+                        onFavoriteClick()
+                    }
+                )
+            }
         }
     }
 }
