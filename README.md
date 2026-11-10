@@ -54,7 +54,7 @@ These Gradle release outputs are unsigned and are not ready to install or distri
 ## Download
 
 - [Download Android TV release APK](https://github.com/bs23-mhasan/ipTV/raw/refs/heads/master/tv/release/tv-release.apk)
-- Mobile release APK: no download link available yet.
+- [Download mobile release APK](https://github.com/bs23-mhasan/ipTV/raw/refs/heads/master/mobile/release/mobile-release.apk)
 
 Open the repository root in Android Studio to run either application on a device or emulator. The TV app declares the Leanback launcher category; touch input is optional.
 
