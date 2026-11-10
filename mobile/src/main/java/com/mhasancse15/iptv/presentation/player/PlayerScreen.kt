@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mhasancse15.iptv.presentation.LoadingGif
 import com.mhasancse15.iptv.domain.model.Channel
 
 @Composable
@@ -70,17 +70,18 @@ fun PlayerScreen(
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    if (uiState is PlayerUiState.Loading) {
+                    if (uiState is PlayerUiState.Loading                    ) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            modifier = Modifier.fillMaxSize()
                         ) {
+                            LoadingGif(Modifier.fillMaxSize())
                             Column(
-                                modifier = Modifier.padding(32.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(32.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                CircularProgressIndicator()
                                 Text(
                                     text = "Loading channel...",
                                     style = MaterialTheme.typography.bodyLarge,

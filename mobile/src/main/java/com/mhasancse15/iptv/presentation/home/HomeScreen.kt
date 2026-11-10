@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mhasancse15.iptv.presentation.BdixViewModel
+import com.mhasancse15.iptv.presentation.LoadingGif
 import com.mhasancse15.iptv.data.repository.ChannelUiState
 import com.mhasancse15.iptv.presentation.home.components.*
 
@@ -37,8 +38,8 @@ fun HomeScreen(
 
     when (uiState) {
         is ChannelUiState.Loading -> {
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Loading channels...", style = MaterialTheme.typography.bodyLarge)
+            Box(modifier = modifier.fillMaxSize()) {
+                LoadingGif(Modifier.fillMaxSize())
             }
         }
 

@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.okhttp3.logging.interceptor)

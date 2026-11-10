@@ -41,7 +41,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -391,23 +390,12 @@ private fun TvExperience(
                     )
                 }
             }
-            if (loading && channels.isEmpty()) {
-                item {
-                    Box(
-                        Modifier.fillMaxWidth().height(220.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFFADC6FF))
-                    }
-                }
-            }
             val favoriteChannels = filtered.filter { it.id in favorites }
             if (favoriteChannels.isNotEmpty()) {
                 item {
                     TvChannelRow("Favorite", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
                 }
             }
-
             TvChannelSection.entries.forEach { section ->
                 val sectionChannels = filtered.filter { it.homeSection() == section }
                 if (sectionChannels.isNotEmpty()) {
@@ -426,6 +414,9 @@ private fun TvExperience(
                     )
                 }
             }
+        }
+        if (loading && channels.isEmpty()) {
+            LoadingGif(Modifier.fillMaxSize())
         }
         Row(
             modifier = Modifier
@@ -694,9 +685,11 @@ private fun TvPlayer(
             .build()
     }
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
+    var isBuffering by remember { mutableStateOf(true) }
     var playbackError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(channel.id) {
         playerView?.hideController()
+        isBuffering = true
         playbackError = null
         exoPlayer.playWhenReady = false
         exoPlayer.stop()
@@ -707,7 +700,12 @@ private fun TvPlayer(
     }
     DisposableEffect(exoPlayer, lifecycleOwner) {
         val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                isBuffering = playbackState == Player.STATE_BUFFERING
+            }
+
             override fun onPlayerError(error: PlaybackException) {
+                isBuffering = false
                 playbackError = "Unable to play this stream: ${error.errorCodeName}"
             }
         }
@@ -755,6 +753,9 @@ private fun TvPlayer(
             },
             modifier = Modifier.fillMaxSize()
         )
+        if (isBuffering && playbackError == null) {
+            LoadingGif(Modifier.fillMaxSize())
+        }
         playbackError?.let { message ->
             Column(
                 modifier = Modifier.align(Alignment.Center).padding(24.dp),
@@ -764,6 +765,7 @@ private fun TvPlayer(
                 Text(message, color = MaterialTheme.colorScheme.error)
                 Button(onClick = {
                     playbackError = null
+                    isBuffering = true
                     exoPlayer.prepare()
                     exoPlayer.play()
                 }) { Text("Retry") }
