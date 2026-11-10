@@ -103,6 +103,7 @@ kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml" }
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

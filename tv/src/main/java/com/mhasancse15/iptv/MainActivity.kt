@@ -25,8 +25,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Refresh
@@ -50,9 +52,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -73,11 +78,13 @@ import coil.compose.AsyncImage
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
+import java.util.Date
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -237,93 +244,141 @@ private fun TvExperience(
     }
 
     var query by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    var currentTime by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime = android.text.format.DateFormat.getTimeFormat(context).format(Date())
+            delay(60_000)
+        }
+    }
     val filtered = channels.filter {
         query.isBlank() || it.name.contains(query, ignoreCase = true) ||
             it.category.contains(query, ignoreCase = true)
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF0B0B0F)),
-        contentPadding = PaddingValues(start = 52.dp, top = 36.dp, end = 52.dp, bottom = 48.dp),
-        verticalArrangement = Arrangement.spacedBy(26.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Image(
-                    painter = painterResource(R.mipmap.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp)
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "BDIX TV",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+    Box(Modifier.fillMaxSize().background(Color(0xFF0E131F))) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 56.dp, top = 28.dp, end = 56.dp, bottom = 104.dp),
+            verticalArrangement = Arrangement.spacedBy(38.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(18.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.mipmap.ic_launcher_foreground),
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp)
                     )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "BDIX TV",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color(0xFFDEE2F3),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "LIVE CHANNELS",
+                            color = Color(0xFF4EDEA3),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text("Search channels") },
+                        singleLine = true,
+                        modifier = Modifier.width(300.dp)
+                    )
+                    IconButton(onClick = onRefresh, enabled = !loading) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh playlists",
+                            tint = if (loading) Color(0xFF70788A) else Color(0xFFDEE2F3)
+                        )
+                    }
                     Text(
-                        "Bangladesh  •  Indian Bangla  •  Other",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        currentTime,
+                        color = Color(0xFFDEE2F3),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+            }
+            if (error != null) {
+                item {
+                    Text(
+                        error,
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("Search channels") },
-                    singleLine = true,
-                    modifier = Modifier.width(330.dp)
-                )
-                IconButton(onClick = onRefresh) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh playlists")
+            }
+            if (loading && channels.isEmpty()) {
+                item {
+                    Box(
+                        Modifier.fillMaxWidth().height(220.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFFADC6FF))
+                    }
                 }
             }
-        }
-        if (error != null) {
-            item {
-                Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleMedium)
+            val favoriteChannels = filtered.filter { it.id in favorites }
+            if (favoriteChannels.isNotEmpty()) {
+                item {
+                    TvChannelRow("Favorites", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
+                }
             }
-        }
-        if (loading && channels.isEmpty()) {
-            item { Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            } }
-        }
-        val favoriteChannels = filtered.filter { it.id in favorites }
-        if (favoriteChannels.isNotEmpty()) {
-            item {
-                TvChannelRow("Favorites", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
-            }
-        }
 
-        TvChannelSection.entries.forEach { section ->
-            val sectionChannels = filtered.filter { it.homeSection() == section }
-            if (sectionChannels.isNotEmpty()) {
-                item(key = section.title) {
-                    TvChannelRow(section.title, sectionChannels, favorites, onSelectChannel, onToggleFavorite)
+            TvChannelSection.entries.forEach { section ->
+                val sectionChannels = filtered.filter { it.homeSection() == section }
+                if (sectionChannels.isNotEmpty()) {
+                    item(key = section.title) {
+                        TvChannelRow(section.title, sectionChannels, favorites, onSelectChannel, onToggleFavorite)
+                    }
+                }
+            }
+            if (!loading && filtered.isEmpty()) {
+                item {
+                    Text(
+                        if (channels.isEmpty()) "No channels are available. Refresh to try again."
+                        else "No channels match your search.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.titleLarge
+                    )
                 }
             }
         }
-        if (!loading && filtered.isEmpty()) {
-            item {
-                Text(
-                    if (channels.isEmpty()) "No channels are available. Refresh to try again."
-                    else "No channels match your search.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 56.dp, bottom = 20.dp)
+                .clip(CircleShape)
+                .background(Color(0xE6161B28))
+                .padding(horizontal = 22.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("▲ ▼ ◀ ▶  Navigate", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
+            Text("•", color = Color(0xFF70788A))
+            Text("OK  Select", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
+            Text("•", color = Color(0xFF70788A))
+            Text("BACK  Back", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
         }
     }
 }
 
 private enum class TvChannelSection(val title: String) {
-    BANGLADESH("Bangladesh"),
-    INDIAN_BANGLA("Indian Bangla"),
-    OTHER("Other")
+    BANGLADESH("Bangla TV Channels"),
+    INDIAN_BANGLA("Indian Bangla TV Channels"),
+    SPORTS("Sports & Global Networks"),
+    OTHER("Other Channels")
 }
 
 private fun TvChannel.homeSection(): TvChannelSection {
@@ -333,6 +388,10 @@ private fun TvChannel.homeSection(): TvChannelSection {
         "abp ananda", "aakash aath", "ruposhi bangla", "sangeet bangla", "kolkata tv",
         "khushboo bangla", "sananda tv", "r plus", "news18 bangla"
     )
+    val sportsTerms = listOf(
+        "sport", "cricket", "football", "soccer", "tennis", "olympic",
+        "espn", "star sports", "sony sports", "ten sports", "willow"
+    )
     val hasBanglaLabel = listOf("bangla", "bengali", "বাংলা").any(searchable::contains)
     val hasIndianLabel = listOf("india", "indian", "kolkata", "west bengal").any(searchable::contains)
     return when {
@@ -340,6 +399,7 @@ private fun TvChannel.homeSection(): TvChannelSection {
             (hasBanglaLabel && hasIndianLabel) -> TvChannelSection.INDIAN_BANGLA
         hasBanglaLabel || searchable.contains("bangladesh") || searchable.contains("bangladeshi") ->
             TvChannelSection.BANGLADESH
+        sportsTerms.any(searchable::contains) -> TvChannelSection.SPORTS
         else -> TvChannelSection.OTHER
     }
 }
@@ -353,8 +413,44 @@ private fun TvChannelRow(
     onToggleFavorite: (TvChannel) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFDEE2F3)
+            )
+            Text(
+                "${channels.size} Live",
+                modifier = Modifier
+                    .padding(start = 14.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF252A37))
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFADC6FF)
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                "Scroll Right",
+                color = Color(0xFFC2C6D6),
+                style = MaterialTheme.typography.labelLarge
+            )
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFFC2C6D6),
+                modifier = Modifier.padding(start = 4.dp).size(18.dp)
+            )
+        }
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
             items(channels, key = { it.id }) { channel ->
                 TvChannelCard(
                     channel = channel,
@@ -375,54 +471,119 @@ private fun TvChannelCard(
     onFavoriteClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    val accentColors = listOf(
+        Color(0xFF123D4A), Color(0xFF3B263A), Color(0xFF213B35),
+        Color(0xFF3D3122), Color(0xFF29354B), Color(0xFF3A2630)
+    )
+    val accent = accentColors[Math.floorMod(channel.name.hashCode(), accentColors.size)]
     Card(
         onClick = onClick,
         modifier = Modifier
-            .width(220.dp)
-            .height(190.dp)
+            .width(320.dp)
+            .height(180.dp)
+            .graphicsLayer {
+                val scale = if (focused) 1.04f else 1f
+                scaleX = scale
+                scaleY = scale
+            }
             .onFocusChanged { focused = it.isFocused },
-        shape = RoundedCornerShape(18.dp),
-        border = if (focused) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF18181F))
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            if (focused) 3.dp else 1.dp,
+            if (focused) Color(0xFFADC6FF) else Color(0xFF303542)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp, focusedElevation = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF161B28))
     ) {
         Box(Modifier.fillMaxSize()) {
             if (channel.logo.isNotBlank()) {
                 AsyncImage(
                     model = channel.logo,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().alpha(0.32f),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Box(
+                Modifier.fillMaxSize().background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            accent.copy(alpha = 0.38f),
+                            Color(0xB30E131F),
+                            Color(0xF2090E1A)
+                        )
+                    )
+                )
+            )
+            if (channel.logo.isNotBlank()) {
+                AsyncImage(
+                    model = channel.logo,
                     contentDescription = channel.name,
-                    modifier = Modifier.fillMaxSize().padding(24.dp).clip(RoundedCornerShape(10.dp)),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(width = 136.dp, height = 76.dp)
+                        .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Fit
                 )
             } else {
+                Text(
+                    channel.name.take(3).uppercase(),
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color(0xFFADC6FF),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Row(
+                modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(24.dp),
-                    contentAlignment = Alignment.Center
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFFFFB4AB))
+                        .padding(horizontal = 9.dp, vertical = 5.dp)
                 ) {
                     Text(
-                        channel.name.take(3).uppercase(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        "● LIVE",
+                        color = Color(0xFF690005),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
             }
-            Text(
-                channel.name,
-                modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()
-                    .background(Color(0xCC101014)).padding(horizontal = 12.dp, vertical = 10.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleSmall
-            )
             IconButton(
                 onClick = onFavoriteClick,
-                modifier = Modifier.align(Alignment.TopEnd)
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xB3090E1A))
             ) {
                 Icon(
                     if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = if (isFavorite) "Remove favorite" else "Add favorite",
-                    tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    tint = if (isFavorite) Color(0xFFFFB4AB) else Color(0xFFDEE2F3)
                 )
             }
+            Text(
+                text = channel.name,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color(0xF2090E1A))
+                        )
+                    )
+                    .padding(start = 14.dp, end = 14.dp, bottom = 12.dp, top = 30.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (focused) Color.White else Color(0xFFDEE2F3)
+            )
         }
     }
 }
