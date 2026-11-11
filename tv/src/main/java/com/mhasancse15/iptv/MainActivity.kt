@@ -135,6 +135,7 @@ class MainActivity : ComponentActivity() {
                 var error by remember { mutableStateOf<String?>(null) }
                 var selectedIndex by remember { mutableIntStateOf(-1) }
                 var selectedChannelList by remember { mutableStateOf(emptyList<TvChannel>()) }
+                var selectedChannelRow by remember { mutableStateOf<String?>(null) }
                 val selected = channels.getOrNull(selectedIndex)
 
                 fun selectAdjacentChannel(offset: Int) {
@@ -209,10 +210,13 @@ class MainActivity : ComponentActivity() {
                     loading = loading,
                     error = error,
                     onRefresh = ::refresh,
-                    onSelectChannel = { channel, orderedChannels ->
+                    selectedChannelId = selected?.id,
+                    selectedChannelRow = selectedChannelRow,
+                    onSelectChannel = { channel, orderedChannels, rowKey ->
                         val index = channels.indexOfFirst { it.id == channel.id }
                         if (index >= 0) {
                             selectedChannelList = orderedChannels
+                            selectedChannelRow = rowKey
                             selectedIndex = index
                         }
                     },
@@ -250,7 +254,9 @@ private fun TvExperience(
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
-    onSelectChannel: (TvChannel, List<TvChannel>) -> Unit,
+    selectedChannelId: String?,
+    selectedChannelRow: String?,
+    onSelectChannel: (TvChannel, List<TvChannel>, String) -> Unit,
     onToggleFavorite: (TvChannel) -> Unit
 ) {
     var query by remember { mutableStateOf("") }
@@ -390,14 +396,30 @@ private fun TvExperience(
             val favoriteChannels = filtered.filter { it.id in favorites }
             if (favoriteChannels.isNotEmpty()) {
                 item {
-                    TvChannelRow("Favorite", favoriteChannels, favorites, onSelectChannel, onToggleFavorite)
+                    TvChannelRow(
+                        title = "Favorite",
+                        channels = favoriteChannels,
+                        favorites = favorites,
+                        selectedChannelId = selectedChannelId,
+                        selectedChannelRow = selectedChannelRow,
+                        onSelectChannel = onSelectChannel,
+                        onToggleFavorite = onToggleFavorite
+                    )
                 }
             }
             TvChannelSection.entries.forEach { section ->
                 val sectionChannels = filtered.filter { it.homeSection() == section }
                 if (sectionChannels.isNotEmpty()) {
                     item(key = section.title) {
-                        TvChannelRow(section.title, sectionChannels, favorites, onSelectChannel, onToggleFavorite)
+                        TvChannelRow(
+                            title = section.title,
+                            channels = sectionChannels,
+                            favorites = favorites,
+                            selectedChannelId = selectedChannelId,
+                            selectedChannelRow = selectedChannelRow,
+                            onSelectChannel = onSelectChannel,
+                            onToggleFavorite = onToggleFavorite
+                        )
                     }
                 }
             }
@@ -471,7 +493,9 @@ private fun TvChannelRow(
     title: String,
     channels: List<TvChannel>,
     favorites: Set<String>,
-    onSelectChannel: (TvChannel, List<TvChannel>) -> Unit,
+    selectedChannelId: String?,
+    selectedChannelRow: String?,
+    onSelectChannel: (TvChannel, List<TvChannel>, String) -> Unit,
     onToggleFavorite: (TvChannel) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -517,7 +541,8 @@ private fun TvChannelRow(
                 TvChannelCard(
                     channel = channel,
                     isFavorite = channel.id in favorites,
-                    onClick = { onSelectChannel(channel, channels) },
+                    restoreFocus = selectedChannelId == channel.id && selectedChannelRow == title,
+                    onClick = { onSelectChannel(channel, channels, title) },
                     onFavoriteClick = { onToggleFavorite(channel) }
                 )
             }
@@ -530,11 +555,16 @@ private fun TvChannelRow(
 private fun TvChannelCard(
     channel: TvChannel,
     isFavorite: Boolean,
+    restoreFocus: Boolean,
     onClick: () -> Unit,
     onFavoriteClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
     var favoriteMenuExpanded by remember { mutableStateOf(false) }
+    val focusRequester = remember(channel.id) { FocusRequester() }
+    LaunchedEffect(restoreFocus) {
+        if (restoreFocus) focusRequester.requestFocus()
+    }
     val accentColors = listOf(
         Color(0xFF123D4A), Color(0xFF3B263A), Color(0xFF213B35),
         Color(0xFF3D3122), Color(0xFF29354B), Color(0xFF3A2630)
@@ -561,6 +591,7 @@ private fun TvChannelCard(
             Box(
                 Modifier
                     .fillMaxSize()
+                    .focusRequester(focusRequester)
                     .onFocusChanged { focused = it.isFocused }
                     .combinedClickable(
                         onClick = onClick,
