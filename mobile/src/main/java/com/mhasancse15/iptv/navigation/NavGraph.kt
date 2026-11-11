@@ -60,18 +60,19 @@ object NavGraph {
         val epgError by viewModel.epgError.collectAsState()
         val themePreference by viewModel.themePreference.collectAsState()
         var selectedChannel by remember { mutableStateOf<Channel?>(null) }
+        var selectedChannelList by remember { mutableStateOf(emptyList<Channel>()) }
         val backStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry?.destination?.route
 
-        fun openChannel(channel: Channel) {
+        fun openChannel(channel: Channel, channelList: List<Channel>) {
             selectedChannel = channel
+            selectedChannelList = channelList
             viewModel.markAsWatched(channel.id)
             navController.navigate(PLAYER)
         }
 
         fun changeChannel(step: Int) {
-            val channels = (channelState as? com.mhasancse15.iptv.data.repository.ChannelUiState.Success)
-                ?.allChannels.orEmpty()
+            val channels = selectedChannelList
             val index = channels.indexOfFirst { it.id == selectedChannel?.id }
             if (index >= 0 && channels.isNotEmpty()) {
                 selectedChannel = channels[(index + step + channels.size) % channels.size]
@@ -119,11 +120,7 @@ object NavGraph {
                 composable(HOME) {
                     HomeScreen(
                         viewModel = viewModel,
-                        onChannelClick = { id ->
-                            val channels = (channelState as? com.mhasancse15.iptv.data.repository.ChannelUiState.Success)
-                                ?.allChannels.orEmpty()
-                            channels.firstOrNull { it.id == id }?.let(::openChannel)
-                        },
+                        onChannelClick = ::openChannel,
                         onFavoriteClick = viewModel::toggleFavorite,
                         onSearchClick = { navController.navigate(SEARCH) },
                         onSettingsClick = { navController.navigate(SETTINGS) },
@@ -143,7 +140,7 @@ object NavGraph {
                         channels = channels,
                         searchQuery = searchQuery,
                         onSearchQueryChange = viewModel::updateSearchQuery,
-                        onChannelClick = ::openChannel,
+                        onChannelClick = { channel -> openChannel(channel, channels) },
                         onFavoriteClick = viewModel::toggleFavorite,
                         categories = viewModel.getCategoryList(),
                         countries = viewModel.getCountryList(),
@@ -158,7 +155,7 @@ object NavGraph {
                         ?.favoriteChannels.orEmpty()
                     FavoritesScreen(
                         favoriteChannels = favorites,
-                        onChannelClick = ::openChannel,
+                        onChannelClick = { channel -> openChannel(channel, favorites) },
                         onFavoriteClick = viewModel::toggleFavorite,
                         onClearAll = viewModel::clearFavorites
                     )
@@ -170,17 +167,18 @@ object NavGraph {
                         channels = recentlyWatched,
                         searchQuery = searchQuery,
                         onSearchQueryChange = viewModel::updateSearchQuery,
-                        onChannelClick = ::openChannel,
+                        onChannelClick = { channel -> openChannel(channel, recentlyWatched) },
                         onFavoriteClick = viewModel::toggleFavorite,
                         title = "Recently Watched"
                     )
                 }
                 composable(SEARCH) {
+                    val searchResults = viewModel.getSearchResults(effectiveSearchQuery)
                     SearchScreen(
-                        channels = viewModel.getSearchResults(effectiveSearchQuery),
+                        channels = searchResults,
                         searchQuery = searchQuery,
                         onSearchQueryChange = viewModel::updateSearchQuery,
-                        onChannelClick = ::openChannel,
+                        onChannelClick = { channel -> openChannel(channel, searchResults) },
                         onFavoriteClick = viewModel::toggleFavorite
                     )
                 }

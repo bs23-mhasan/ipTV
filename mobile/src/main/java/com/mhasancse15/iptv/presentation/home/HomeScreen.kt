@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.mhasancse15.iptv.domain.model.Channel
 import com.mhasancse15.iptv.presentation.BdixViewModel
 import com.mhasancse15.iptv.presentation.LoadingGif
 import com.mhasancse15.iptv.data.repository.ChannelUiState
@@ -27,7 +28,7 @@ import com.mhasancse15.iptv.presentation.home.components.*
 fun HomeScreen(
     modifier: Modifier = Modifier.fillMaxSize(),
     viewModel: BdixViewModel,
-    onChannelClick: (String) -> Unit,
+    onChannelClick: (Channel, List<Channel>) -> Unit,
     onFavoriteClick: (String) -> Unit,
     onSearchClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -91,10 +92,13 @@ fun HomeScreen(
 
                 // Featured Channel
                 item {
-                    val featuredChannel = uiState.featuredChannels.firstOrNull()
                     FeaturedChannelCard(
-                        channel = featuredChannel,
-                        onClick = { featuredChannel?.let { onChannelClick(it.id) } }
+                        channel = uiState.featuredChannels.firstOrNull(),
+                        onClick = {
+                            uiState.featuredChannels.firstOrNull()?.let { channel ->
+                                onChannelClick(channel, uiState.featuredChannels)
+                            }
+                        }
                     )
                 }
 
@@ -110,10 +114,11 @@ fun HomeScreen(
 
                 // Popular Channels
                 item {
+                    val popularChannels = uiState.allChannels.take(20)
                     ChannelsSection(
                         title = "Popular Channels",
-                        channels = uiState.allChannels.take(20),
-                        onChannelClick = { onChannelClick(it.id) },
+                        channels = popularChannels,
+                        onChannelClick = { onChannelClick(it, popularChannels) },
                         onFavoriteClick = onFavoriteClick
                     )
                 }
@@ -124,7 +129,7 @@ fun HomeScreen(
                         ChannelsSection(
                             title = "Favorites",
                             channels = uiState.favoriteChannels,
-                            onChannelClick = { onChannelClick(it.id) },
+                            onChannelClick = { onChannelClick(it, uiState.favoriteChannels) },
                             onFavoriteClick = onFavoriteClick
                         )
                     }
@@ -136,7 +141,7 @@ fun HomeScreen(
                         ChannelsSection(
                             title = "Recently Watched",
                             channels = uiState.recentChannels,
-                            onChannelClick = { onChannelClick(it.id) },
+                            onChannelClick = { onChannelClick(it, uiState.recentChannels) },
                             onFavoriteClick = onFavoriteClick
                         )
                     }

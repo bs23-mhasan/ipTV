@@ -134,19 +134,14 @@ class MainActivity : ComponentActivity() {
                 var loading by remember { mutableStateOf(channels.isEmpty()) }
                 var error by remember { mutableStateOf<String?>(null) }
                 var selectedIndex by remember { mutableIntStateOf(-1) }
+                var selectedChannelList by remember { mutableStateOf(emptyList<TvChannel>()) }
                 val selected = channels.getOrNull(selectedIndex)
 
                 fun selectAdjacentChannel(offset: Int) {
-                    val current = channels.getOrNull(selectedIndex) ?: return
-                    val sectionChannels = if (current.id in favorites) {
-                        channels.filter { it.id in favorites }
-                    } else {
-                        channels.filter { it.homeSection() == current.homeSection() }
-                    }
-                    val sectionIndex = sectionChannels.indexOfFirst { it.id == current.id }
-                    if (sectionIndex >= 0 && sectionChannels.isNotEmpty()) {
-                        val next = sectionChannels[
-                            (sectionIndex + offset + sectionChannels.size) % sectionChannels.size
+                    val sectionIndex = selectedChannelList.indexOfFirst { it.id == selected?.id }
+                    if (sectionIndex >= 0 && selectedChannelList.isNotEmpty()) {
+                        val next = selectedChannelList[
+                            (sectionIndex + offset + selectedChannelList.size) % selectedChannelList.size
                         ]
                         selectedIndex = channels.indexOfFirst { it.id == next.id }
                     }
@@ -214,16 +209,19 @@ class MainActivity : ComponentActivity() {
                     loading = loading,
                     error = error,
                     onRefresh = ::refresh,
+                    onSelectChannel = { channel, orderedChannels ->
+                        val index = channels.indexOfFirst { it.id == channel.id }
+                        if (index >= 0) {
+                            selectedChannelList = orderedChannels
+                            selectedIndex = index
+                        }
+                    },
                     onToggleFavorite = { channel ->
                         favorites = favorites.toMutableSet().apply {
                             if (!add(channel.id)) remove(channel.id)
                         }
                         getSharedPreferences("bdix_tv", MODE_PRIVATE).edit()
                             .putStringSet("favorite_ids", favorites).apply()
-                    },
-                    onSelectChannel = { channel ->
-                        val index = channels.indexOf(channel)
-                        if (index >= 0) selectedIndex = index
                     }
                 )
             }
@@ -252,16 +250,9 @@ private fun TvExperience(
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
-    onToggleFavorite: (TvChannel) -> Unit,
-    onSelectChannel: (TvChannel) -> Unit
+    onSelectChannel: (TvChannel, List<TvChannel>) -> Unit,
+    onToggleFavorite: (TvChannel) -> Unit
 ) {
-    if (selectedChannel != null) {
-        TvPlayer(
-            channel = selectedChannel
-        )
-        return
-    }
-
     var query by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
     var searchButtonFocused by remember { mutableStateOf(false) }
@@ -269,7 +260,7 @@ private fun TvExperience(
     LaunchedEffect(searchActive) {
         if (searchActive) searchFocusRequester.requestFocus()
     }
-    BackHandler(enabled = searchActive) {
+    BackHandler(enabled = searchActive && selectedChannel == null) {
         searchActive = false
     }
     val context = LocalContext.current
@@ -284,7 +275,13 @@ private fun TvExperience(
         query.isBlank() || it.name.contains(query, ignoreCase = true) ||
             it.category.contains(query, ignoreCase = true)
     }
-    Box(Modifier.fillMaxSize().background(Color(0xFF0E131F))) {
+    Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF0E131F))
+                .alpha(if (selectedChannel == null) 1f else 0f)
+        ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 56.dp, top = 28.dp, end = 56.dp, bottom = 104.dp),
@@ -434,6 +431,8 @@ private fun TvExperience(
             Text("•", color = Color(0xFF70788A))
             Text("BACK  Back", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
         }
+        }
+        selectedChannel?.let { TvPlayer(channel = it) }
     }
 }
 
@@ -472,7 +471,7 @@ private fun TvChannelRow(
     title: String,
     channels: List<TvChannel>,
     favorites: Set<String>,
-    onSelectChannel: (TvChannel) -> Unit,
+    onSelectChannel: (TvChannel, List<TvChannel>) -> Unit,
     onToggleFavorite: (TvChannel) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -518,7 +517,7 @@ private fun TvChannelRow(
                 TvChannelCard(
                     channel = channel,
                     isFavorite = channel.id in favorites,
-                    onClick = { onSelectChannel(channel) },
+                    onClick = { onSelectChannel(channel, channels) },
                     onFavoriteClick = { onToggleFavorite(channel) }
                 )
             }
