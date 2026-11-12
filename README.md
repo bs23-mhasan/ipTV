@@ -10,6 +10,7 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Supports channel search, category/country filtering, and a channel guide matched by `tvg-id`.
 - Plays supported HLS and direct streams with Media3, player retry/error feedback, previous/next channel controls, and a landscape mobile player.
 - Provides a separate TV browsing experience with D-pad-focusable channel cards, favorites, search, and remote-friendly playback controls.
+- Loads the generated `bangla_channels.json` on Android TV and shows its entries in a separate **Premium Channel** row; the last successful JSON response is cached for offline use.
 - Checks for Android TV app updates on request using the GitHub-hosted `tv/appinfo.json` manifest, with optional or mandatory update handling.
 - Stores the EPG cache in app-private storage and favorites/preferences locally.
 
@@ -18,6 +19,7 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Main: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/IPTV-Playlist.m3u`
 - International: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/International-Playlist.m3u`
 - XMLTV: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/epg/epg.xml`
+- Android TV Premium Channel JSON: `https://raw.githubusercontent.com/bs23-mhasan/ipTV/master/bangla_channels.json`
 
 Only metadata present in a playlist is shown. Channels without a `tvg-country` or `country` attribute are not assigned an inferred country, and channels without a category are not placed in an invented category.
 
@@ -79,3 +81,44 @@ The app compares Android version codes, not version-name strings. Update install
 ## Limitations and rights
 
 Playlist presence does not guarantee that a stream is online, reachable from a particular ISP or location, or playable on a given device. Media3 support depends on stream format, codecs, and device capabilities. Use streams only when authorized; BDIX TV does not host or proxy the listed content. Third-party channel names, logos, streams, and programme data may have separate rights.
+# bangla-iptv
+
+Auto-updated JSON list of Bangladesh and Indian Bangla IPTV channels (720p and up, including sports).
+
+- `bangla_channels.json` – the generated list (updated automatically)
+- `fetch_channels.py` – builds the list from iptv-org playlists and your own repo files
+- `.github/workflows/update-channels.yml` – refreshes the JSON every 12 hours
+
+## Use in your app
+
+```
+https://raw.githubusercontent.com/<user>/<repo>/main/bangla_channels.json
+```
+
+Shape: `{ total, byCountry, channels[] }`. Each channel has `name`, `id`, `country`,
+`resolution`, `logo`, `group`, `geoBlocked`, `status`, `url`, and optionally `userAgent` / `referrer`.
+
+`status` is `online` or `offline`, tested by the workflow on every update. Channels are never removed,
+so hide offline ones in your app: `channels.filter { it.status != "offline" }`.
+The check runs from GitHub's servers (outside Bangladesh), so Bangladesh-only or geo-blocked streams
+may show `offline` even though they work for you. A missing `status` means it hasn't been checked yet.
+
+## Setup
+
+1. Unzip, then push the files to a new GitHub repo (make sure the hidden `.github` folder is included).
+2. That's it. The first push starts the workflow, then it runs every 12 hours and commits the updated JSON.
+3. (Optional) Add your own playlists to `MY_REPO_SOURCES` in `fetch_channels.py`.
+
+If a run fails with a permission error: **Settings -> Actions -> General -> Workflow permissions** -> *Read and write permissions*.
+You can also start a run anytime: **Actions -> Update channels -> Run workflow**.
+
+## Run locally
+
+```
+python fetch_channels.py                    # 720p+ (default), no stream check
+python fetch_channels.py --check            # also test every stream (adds status)
+python fetch_channels.py --min-res 1080     # 1080p only
+python fetch_channels.py --filter-mine      # also filter your own entries
+```
+
+Streams are public and can go offline or be geo-blocked at any time.

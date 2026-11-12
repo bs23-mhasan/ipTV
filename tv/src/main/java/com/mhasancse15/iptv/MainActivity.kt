@@ -103,6 +103,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
+import com.mhasancse15.iptv.channels.PremiumChannelRepository
 import com.mhasancse15.iptv.update.AppUpdateInfo
 import com.mhasancse15.iptv.update.AppDownloadStatus
 import com.mhasancse15.iptv.update.AppUpdateDownloader
@@ -128,6 +129,14 @@ private data class TvChannel(
     val url: String,
     val logo: String,
     val category: String
+)
+
+private fun com.mhasancse15.iptv.channels.PremiumChannel.toTvChannel() = TvChannel(
+    id = id,
+    name = name,
+    url = url,
+    logo = logo,
+    category = category
 )
 
 private sealed interface TvUpdateDialogState {
@@ -156,17 +165,33 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val savedFavorites = getSharedPreferences("bdix_tv", MODE_PRIVATE)
             .getStringSet("favorite_ids", emptySet()).orEmpty().toSet()
-        val cachedM3u = getSharedPreferences("bdix_tv", MODE_PRIVATE).getString("playlist", null)
+        val preferences = getSharedPreferences("bdix_tv", MODE_PRIVATE)
+        val cachedM3u = preferences.getString("playlist", null)
+        val cachedPremiumJson = preferences.getString("premium_channels_json", null)
         setContent {
             IPTVTheme {
                 var channels by remember { mutableStateOf(cachedM3u?.let(::parsePlaylist).orEmpty()) }
+                var premiumChannels by remember {
+                    mutableStateOf(
+                        cachedPremiumJson?.let { cached ->
+                            runCatching {
+                                PremiumChannelRepository.parseChannels(cached).map { it.toTvChannel() }
+                            }.getOrDefault(emptyList())
+                        }.orEmpty()
+                    )
+                }
+                var premiumError by remember { mutableStateOf<String?>(null) }
                 var favorites by remember { mutableStateOf(savedFavorites) }
-                var loading by remember { mutableStateOf(channels.isEmpty()) }
+                var loading by remember {
+                    mutableStateOf(channels.isEmpty() && premiumChannels.isEmpty())
+                }
                 var error by remember { mutableStateOf<String?>(null) }
                 var selectedIndex by remember { mutableIntStateOf(-1) }
                 var selectedChannelList by remember { mutableStateOf(emptyList<TvChannel>()) }
                 var selectedChannelRow by remember { mutableStateOf<String?>(null) }
-                val selected = channels.getOrNull(selectedIndex)
+                val allChannels = channels + premiumChannels
+                val selected = allChannels.getOrNull(selectedIndex)
+                val premiumRepository = remember { PremiumChannelRepository(client) }
 
                 fun selectAdjacentChannel(offset: Int) {
                     val sectionIndex = selectedChannelList.indexOfFirst { it.id == selected?.id }
@@ -174,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         val next = selectedChannelList[
                             (sectionIndex + offset + selectedChannelList.size) % selectedChannelList.size
                         ]
-                        selectedIndex = channels.indexOfFirst { it.id == next.id }
+                        selectedIndex = allChannels.indexOfFirst { it.id == next.id }
                     }
                 }
 
@@ -208,8 +233,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                LaunchedEffect(Unit) {
+                fun refreshPremiumChannels() {
+                    lifecycleScope.launch {
+                        premiumError = null
+                        try {
+                            val json = premiumRepository.fetchChannelsJson()
+                            val parsed = PremiumChannelRepository.parseChannels(json).map { it.toTvChannel() }
+                            if (parsed.isEmpty()) throw IOException("JSON contained no valid premium channels")
+                            premiumChannels = parsed
+                            preferences.edit().putString("premium_channels_json", json).apply()
+                        } catch (failure: Exception) {
+                            premiumError = "Premium channels refresh failed: ${failure.message ?: "network error"}"
+                        }
+                    }
+                }
+
+                fun refreshAllChannels() {
                     refresh()
+                    refreshPremiumChannels()
+                }
+
+                LaunchedEffect(Unit) {
+                    refreshAllChannels()
                 }
 
                 SideEffect {
@@ -234,17 +279,19 @@ class MainActivity : ComponentActivity() {
 
                 BackHandler(selectedIndex >= 0) { selectedIndex = -1 }
                 TvExperience(
-                    channels = channels,
+                    channels = allChannels,
+                    premiumChannels = premiumChannels,
+                    premiumError = premiumError,
                     favorites = favorites,
                     selectedChannel = selected,
                     loading = loading,
                     error = error,
-                    onRefresh = ::refresh,
+                    onRefresh = ::refreshAllChannels,
                     httpClient = client,
                     selectedChannelId = selected?.id,
                     selectedChannelRow = selectedChannelRow,
                     onSelectChannel = { channel, orderedChannels, rowKey ->
-                        val index = channels.indexOfFirst { it.id == channel.id }
+                        val index = allChannels.indexOfFirst { it.id == channel.id }
                         if (index >= 0) {
                             selectedChannelList = orderedChannels
                             selectedChannelRow = rowKey
@@ -280,6 +327,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun TvExperience(
     channels: List<TvChannel>,
+    premiumChannels: List<TvChannel>,
+    premiumError: String?,
     favorites: Set<String>,
     selectedChannel: TvChannel?,
     loading: Boolean,
@@ -510,6 +559,10 @@ private fun TvExperience(
         query.isBlank() || it.name.contains(query, ignoreCase = true) ||
             it.category.contains(query, ignoreCase = true)
     }
+    val filteredPremiumChannels = premiumChannels.filter {
+        query.isBlank() || it.name.contains(query, ignoreCase = true) ||
+            it.category.contains(query, ignoreCase = true)
+    }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
@@ -621,6 +674,15 @@ private fun TvExperience(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
+                if (premiumError != null) {
+                    item {
+                        Text(
+                            premiumError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
             }
             item {
                 TvUpdateCard(
@@ -645,8 +707,24 @@ private fun TvExperience(
                     )
                 }
             }
+            if (filteredPremiumChannels.isNotEmpty()) {
+                item(key = "premium_channel_section") {
+                    TvChannelRow(
+                        title = "Premium Channel",
+                        channels = filteredPremiumChannels,
+                        favorites = favorites,
+                        selectedChannelId = selectedChannelId,
+                        selectedChannelRow = selectedChannelRow,
+                        onSelectChannel = onSelectChannel,
+                        onToggleFavorite = onToggleFavorite
+                    )
+                }
+            }
+            val premiumIds = premiumChannels.mapTo(mutableSetOf()) { it.id }
             TvChannelSection.entries.forEach { section ->
-                val sectionChannels = filtered.filter { it.homeSection() == section }
+                val sectionChannels = filtered.filter {
+                    it.id !in premiumIds && it.homeSection() == section
+                }
                 if (sectionChannels.isNotEmpty()) {
                     item(key = section.title) {
                         TvChannelRow(
@@ -661,10 +739,12 @@ private fun TvExperience(
                     }
                 }
             }
-            if (!loading && filtered.isEmpty()) {
+            if (!loading && filtered.isEmpty() && filteredPremiumChannels.isEmpty()) {
                 item {
                     Text(
-                        if (channels.isEmpty()) "No channels are available. Refresh to try again."
+                        if (channels.isEmpty() && premiumChannels.isEmpty()) {
+                            "No channels are available. Refresh to try again."
+                        }
                         else "No channels match your search.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.titleLarge

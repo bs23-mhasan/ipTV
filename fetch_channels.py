@@ -14,6 +14,7 @@ import re
 import sys
 import urllib.request
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 
 # ---------------------------------------------------------------- CONFIG ----
 
@@ -121,6 +122,36 @@ def load_source(url_or_path, is_iptv_org):
     return parse_m3u(text)
 
 
+BROWSER_UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36"
+
+
+def check_one(c, timeout=10):
+    """Return 'online' or 'offline'. Reads only the first 2 KB of the stream."""
+    headers = {
+        "User-Agent": c.get("userAgent") or BROWSER_UA,
+        "Range": "bytes=0-2047",
+    }
+    if c.get("referrer"):
+        headers["Referer"] = c["referrer"]
+    for _ in range(2):  # one retry to avoid false negatives
+        try:
+            req = urllib.request.Request(c["url"], headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                body = r.read(2048)
+                if ".m3u8" in c["url"].lower() and b"#EXTM3U" not in body:
+                    continue  # got a page, not a playlist
+                return "online"
+        except Exception:
+            continue
+    return "offline"
+
+
+def check_streams(channels, workers=20):
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        for c, status in zip(channels, ex.map(check_one, channels)):
+            c["status"] = status
+
+
 def passes_filters(c, min_res):
     return c["_code"] in KEEP_COUNTRIES and (c["resolution"] or 0) >= min_res
 
@@ -129,6 +160,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="bangla_channels.json")
     ap.add_argument("--min-res", type=int, default=MIN_RESOLUTION)
+    ap.add_argument("--check", action="store_true",
+                    help="test every stream and add a status field (online/offline)")
+    ap.add_argument("--workers", type=int, default=20)
     ap.add_argument("--filter-mine", action="store_true",
                     help="also apply country/resolution filters to your repo's entries")
     args = ap.parse_args()
@@ -157,6 +191,10 @@ def main():
         print(f"Fetching (iptv-org) {path}")
         add(load_source(path, True), True)
 
+    if args.check:
+        print(f"Checking {len(merged)} streams...")
+        check_streams(merged, args.workers)
+
     for c in merged:
         c.pop("_code", None)
     merged.sort(key=lambda c: (c["country"], c["name"].lower()))
@@ -164,8 +202,10 @@ def main():
     result = {
         "total": len(merged),
         "byCountry": dict(Counter(c["country"] or "Unknown" for c in merged)),
-        "channels": merged,
     }
+    if args.check:
+        result["byStatus"] = dict(Counter(c["status"] for c in merged))
+    result["channels"] = merged
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     print(f"Wrote {len(merged)} channels -> {args.out}")
