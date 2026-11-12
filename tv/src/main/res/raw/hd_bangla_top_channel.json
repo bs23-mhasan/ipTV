@@ -1,0 +1,707 @@
+{
+  "total": 70,
+  "bangladesh": 20,
+  "india": 50,
+  "channels": [
+    {
+      "name": "Ananda TV (720p)",
+      "id": "AnandaTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/jkbo7Qe.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/anandatv.stream/live-orgin/anandatv.stream/playlist.m3u8"
+    },
+    {
+      "name": "ATN Bangla (720p)",
+      "id": "ATNBangla.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/K1HmMRz.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "http://tvsen5.aynascope.net/atnbangla/index.m3u8"
+    },
+    {
+      "name": "Bangla Vision (720p)",
+      "id": "BanglaVision.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/nCWgp38.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "https://tvsen5.aynaott.com/banglavision/index.m3u8"
+    },
+    {
+      "name": "Channel S (Bangladesh) (720p)",
+      "id": "ChannelS.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://www.channels.com.bd/storage/project_files/logo/2024-05-14a_n17156821814310.png",
+      "group": "Culture",
+      "geoBlocked": false,
+      "url": "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/channels.stream/live-orgin/channels.stream/playlist.m3u8"
+    },
+    {
+      "name": "Duronto TV (1080p)",
+      "id": "DurontoTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/gXsddRK.png",
+      "group": "Kids",
+      "geoBlocked": false,
+      "url": "https://livetv.shamon-cable.net:8443/Duronto/index.m3u8"
+    },
+    {
+      "name": "Ekhon TV (1080p)",
+      "id": "EkhonTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/tRrDh6z.png",
+      "group": "Business",
+      "geoBlocked": false,
+      "url": "https://tplay.live/out/bangladesh/ekhontv.index.m3u8"
+    },
+    {
+      "name": "Gazi TV (1080p)",
+      "id": "GaziTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/2Lzhiq6.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "http://tvn1.chowdhury-shaheb.com/gazitv/index.m3u8"
+    },
+    {
+      "name": "Green TV (1080p)",
+      "id": "GreenTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://www.jagobd.com/wp-content/uploads/2022/12/green-tv.jpg",
+      "group": "Family",
+      "geoBlocked": false,
+      "url": "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/greentv.stream/live-orgin/greentv.stream/playlist.m3u8"
+    },
+    {
+      "name": "Maasranga TV (720p)",
+      "id": "MaasrangaTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/uVZJMed.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "http://tvsen5.aynascope.net/maasrangatv/index.m3u8"
+    },
+    {
+      "name": "Madani Channel Bangla (1080p)",
+      "id": "MadaniChannelBangla.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/vIJTVia.png",
+      "group": "Religious",
+      "geoBlocked": false,
+      "url": "https://streaming.madanichannel.tv/static/streaming-playlists/hls/d3e49b76-ac06-4689-a641-9200445b647f/master.m3u8"
+    },
+    {
+      "name": "Matribhumi TV (720p)",
+      "id": "MatribhumiTV.bd@HD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://www.jagobd.com/wp-content/uploads/2024/10/matribhumi.jpg",
+      "group": "Undefined",
+      "geoBlocked": false,
+      "url": "http://live.playmax.live/matribhumi/index.m3u8"
+    },
+    {
+      "name": "NAN TV (720p)",
+      "id": "NANTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://www.jagobd.com/wp-content/uploads/2019/11/NAN-TV-Logo-02.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/nantv.stream/live-orgin/nantv.stream/playlist.m3u8"
+    },
+    {
+      "name": "News 21 Bangla TV (1080p)",
+      "id": "News21BanglaTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/ijuJfmd.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "http://103.190.133.68:1935/news21live/live/playlist.m3u8"
+    },
+    {
+      "name": "NTV (Bangladesh) (720p)",
+      "id": "NTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/l75bDTx.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "https://tvsen5.aynaott.com/xV4jEKf3D9zc/index.m3u8"
+    },
+    {
+      "name": "Rajdhani TV SD (1080p)",
+      "id": "RajdhaniTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/MBm2gPz.jpeg",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "https://stream.shariarsuvo.com/hls5/rajdhanicable.m3u8"
+    },
+    {
+      "name": "RTV (Bangladesh) (720p)",
+      "id": "RTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/yu8ugqt.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "http://tvsen5.aynascope.net/RtvHD/index.m3u8"
+    },
+    {
+      "name": "Rupashi Bangla TV (720p)",
+      "id": "RupashiBanglaTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Rupashi_Bangla.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/ruposhibangla.stream/playlist.m3u8"
+    },
+    {
+      "name": "Star News (1080p)",
+      "id": "StarNews.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d5/Star_News_Bangladesh_Logo.svg/1280px-Star_News_Bangladesh_Logo.svg.png",
+      "group": "Undefined",
+      "geoBlocked": false,
+      "url": "http://103.135.253.32:8080/Star-News/index.m3u8"
+    },
+    {
+      "name": "T Sports (1080p)",
+      "id": "TSports.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/2JzlorD.png",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://tvsen5.aynaott.com/TnMn5kZz8aLm/index.m3u8"
+    },
+    {
+      "name": "Vokta TV (720p)",
+      "id": "VoktaTV.bd@SD",
+      "country": "Bangladesh",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/szAGBCU.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "https://vokta.raytahost.com/live/voktatv/index.m3u8"
+    },
+    {
+      "name": "Aamar Bangla (720p)",
+      "id": "AamarBangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Amaar_Bangla.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/amarbanglatv.stream/playlist.m3u8"
+    },
+    {
+      "name": "ABP Ananda (1080p)",
+      "id": "ABPAnanda.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s142518_ld_h15_aa.png?lock=720x540",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://d2l4ar6y3mrs4k.cloudfront.net/live-streaming/ananda-livetv/master.m3u8"
+    },
+    {
+      "name": "AKD Calcutta News (1080p)",
+      "id": "AKDCalcuttaNews.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://ltsk-cdn.s3.eu-west-1.amazonaws.com/jumpstart/Temp_Live/cdn/HLS/Channel/transparentImages/Calcutta%20News.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://live.legitpro.co.in/cnnnews/index.m3u8"
+    },
+    {
+      "name": "Ananda Barta (720p)",
+      "id": "AnandaBarta.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Anand_Barta.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://account19.livebox.co.in/Anandabarta2hls/live.m3u8"
+    },
+    {
+      "name": "Bangla Jago (720p)",
+      "id": "BanglaJago.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Bangla_Jago.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://banglajagotv.livebox.co.in/banglajagohls/24x7.m3u8"
+    },
+    {
+      "name": "BHI Channel (720p)",
+      "id": "BHIChannel.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/BHI.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://server.livelegitpro.in/bhichannel/bhichannel/index.m3u8"
+    },
+    {
+      "name": "Cine Jomjomat (1080p)",
+      "id": "CineJomjomat.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Cine_Jomjomat.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://amg13779-amg13779c1-amgplt0016.playout.now3.amagi.tv/ts-eu-w1-n2/playlist/amg13779-amg13779c1-amgplt0016/playlist.m3u8"
+    },
+    {
+      "name": "Colors Bangla HD (1080p)",
+      "id": "ColorsBangla.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_COLORS_BANGLA/images/LOGO_HD/image.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "http://103.165.93.31:8095/colorsBangla/index.m3u8"
+    },
+    {
+      "name": "CTVN AKD Plus (1080p)",
+      "id": "CTVNAKDPlus.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s142754_ld_h15_aa.png?lock=720x540",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://live.legitpro.co.in/ctvnakdplus/index.m3u8"
+    },
+    {
+      "name": "DD Sports (1080p)",
+      "id": "DDSports.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s158255_ld_h15_aa.png?lock=720x540",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/b17adfe543354fdd8d189b110617cddd/index.m3u8"
+    },
+    {
+      "name": "DD Sports HD (1080p)",
+      "id": "DDSports.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s158255_ld_h15_aa.png?lock=720x540",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1161/master.m3u8"
+    },
+    {
+      "name": "Dhoom Music (720p)",
+      "id": "DhoomMusic.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_DHOOM_MUSIC/images/LOGO_HD/image.png",
+      "group": "Music",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1456/master.m3u8"
+    },
+    {
+      "name": "Discovery Channel (India) HD (1080p)",
+      "id": "DiscoveryChannel.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s159106_ld_h15_aa.png?lock=720x540",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "http://103.135.253.32:8080/DISCOVERY/index.m3u8"
+    },
+    {
+      "name": "Enterr 10 Bangla (720p)",
+      "id": "Enterr10Bangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ENTERR10_BANGLA/images/LOGO_HD/image.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://amg01448-samsungin-enterr10bangla-samsungin-ad-gg.amagi.tv/playlist/amg01448-samsungin-enterr10bangla-samsungin/playlist.m3u8"
+    },
+    {
+      "name": "Eurosport (India) HD (1080p)",
+      "id": "Eurosport.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/GNLZZGG002E9LQS.png?lock=720x540",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://livetv.shamon-cable.net:8443/Eurosport-HD/index.m3u8"
+    },
+    {
+      "name": "Friends TV (1080p)",
+      "id": "FriendsTV.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Friends_TV.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://server.playontv.in/friendstv/index.m3u8"
+    },
+    {
+      "name": "Globe TV (720p)",
+      "id": "GlobeTV.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Globe_TV.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://mumbai-edge.smartplaytv.in/GlobeTV/index.m3u8"
+    },
+    {
+      "name": "Headlines Tripura (720p)",
+      "id": "HeadlinesTripura.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Headlines_Tripura.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://distro.ottlive.co.in/headlinestripura/headlinestripura/index.m3u8"
+    },
+    {
+      "name": "Jalsha Movies (1080p)",
+      "id": "JalshaMovies.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/25eWjX2.png",
+      "group": "Movies",
+      "geoBlocked": false,
+      "url": "https://box.bbaria.net:8083/Jalsha_Movie/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "name": "Jalsha Movies HD (1080p)",
+      "id": "JalshaMovies.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/25eWjX2.png",
+      "group": "Movies",
+      "geoBlocked": false,
+      "url": "http://103.135.253.32:8080/Jalsha_movies-HD/index.m3u8"
+    },
+    {
+      "name": "Kabaddi 24x7 (720p)",
+      "id": "Kabaddi24x7.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://papaji.freetvindia.com/media/kabaddi_24x7.png",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://samitaorigin.tangotv.in/KABADDI24X7/SAMITAORIGIN/index.m3u8"
+    },
+    {
+      "name": "Khushboo Bangla (720p)",
+      "id": "KhushbooBangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_KHUSHBOO_BANGLA/images/LOGO_HD/image.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1473/master.m3u8"
+    },
+    {
+      "name": "Kolkata TV (1080p)",
+      "id": "KolkataTV.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s143271_ld_h15_aa.png?lock=720x540",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://cdn.ottlive.co.in/kolkatatv/index.m3u8"
+    },
+    {
+      "name": "KTV Bangla (1080p)",
+      "id": "KTVBangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/channel/2f8e3b371c660faa2f43a7f0942948a4.png",
+      "group": "General",
+      "geoBlocked": false,
+      "url": "https://stream.ottlive.co.in/ktvbangla/index.m3u8"
+    },
+    {
+      "name": "News Live Bangla (1080p)",
+      "id": "NewsLiveBangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://papaji.freetvindia.com/media/News_Live_Bangla.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://stream.ottlive.co.in/newslivebangla/index.m3u8"
+    },
+    {
+      "name": "News18 Bangla (1080p)",
+      "id": "News18Bangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_BANGLA/images/LOGO_HD/image.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://n18syndication.akamaized.net/bpk-tv/News18_Bangla_NW18_MOB/output01/master.m3u8"
+    },
+    {
+      "name": "NK TV Bangla (1080p)",
+      "id": "NKTVBangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://www.nktvbangla.com/wp-content/uploads/2023/09/WhatsApp-Image-2023-09-12-at-2.59.18-PM.jpg",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://nktv.smartstream.video/smartstream-us/nkbangla/nkbangla/playlist.m3u8"
+    },
+    {
+      "name": "Onkar News (1080p)",
+      "id": "OnkarNews.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/onkarnews.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://stream.ottlive.co.in/onkarnews/index.m3u8"
+    },
+    {
+      "name": "Orange Bangla TV (720p)",
+      "id": "OrangeBanglaTV.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/wjSaHj5.png",
+      "group": "Music",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1499/master.m3u8"
+    },
+    {
+      "name": "R Plus (1080p)",
+      "id": "RPlus.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/XUnWcZF.png",
+      "group": "Undefined",
+      "geoBlocked": false,
+      "url": "https://vglivessai.akamaized.net/sg/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/e5dcc9dc-3a33-4b19-a361-5a5b3aa022f7/index.m3u8"
+    },
+    {
+      "name": "R Plus Gold (1080p)",
+      "id": "RPlusGold.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/dpI7XPC.png",
+      "group": "Undefined",
+      "geoBlocked": false,
+      "url": "https://stream.ottlive.co.in/rplusgold/index.m3u8"
+    },
+    {
+      "name": "Raatdin Bangla (720p)",
+      "id": "RaatdinBangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/raatdinbangla.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://server.playontv.in/raatdinbangla/index.m3u8"
+    },
+    {
+      "name": "Rupasi Bangla (720p)",
+      "id": "RupasiBangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://dtil.tmsimg.com/assets/s143733_ld_h15_aa.png?lock=720x540",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1039/master.m3u8"
+    },
+    {
+      "name": "Samay Kolkata (1080p)",
+      "id": "SamayKolkata.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/Samay_Kolkata.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://server.livelegitpro.in/samaykolkata/samaykolkata/index.m3u8"
+    },
+    {
+      "name": "Sangeet Bangla (720p)",
+      "id": "SangeetBangla.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://ltsk-cdn.s3.eu-west-1.amazonaws.com/jumpstart/Temp_Live/cdn/HLS/Channel/transparentImages/Sangeet%20Bangla.png",
+      "group": "Music",
+      "geoBlocked": false,
+      "url": "https://cdn.pishow.tv/ott/live/1143/master.m3u8"
+    },
+    {
+      "name": "Shiksha TV (720p)",
+      "id": "ShikshaTV.in@SD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://play-lh.googleusercontent.com/1ibQhkMCsnXaI9LOiZH-Iyw8rM8CMVJEZAlbFphWuZApSPIp-eZsjltDlN6rqJzIonQ",
+      "group": "Culture;Education",
+      "geoBlocked": false,
+      "url": "http://103.89.46.106:8080/hls/shikshatvhd/index.m3u8"
+    },
+    {
+      "name": "Sony Aath (1080p)",
+      "id": "SonyAath.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SONY_8/images/LOGO_HD/image.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "http://27.124.71.27/Sony_Aath/index.m3u8"
+    },
+    {
+      "name": "Star Jalsha (1080p) [Geo-blocked]",
+      "id": "StarJalsha.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/IlufzR5.png",
+      "group": "Entertainment",
+      "geoBlocked": true,
+      "url": "http://cdn98.com/play/live.php?extension=ts&mac=00:1A:79:99:54:11&play_token=o1cczsG9wV&stream=225805"
+    },
+    {
+      "name": "Star Jalsha HD (1080p)",
+      "id": "StarJalsha.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/IlufzR5.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "http://103.135.253.32:8080/STAR-JALSHA-HD/index.m3u8"
+    },
+    {
+      "name": "Star Sports Select 2 HD (720p)",
+      "id": "StarSportsSelect2.in@HD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://i.imgur.com/FtRT73R.png",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "http://tvsen7.aynascope.net/ssport2hd/index.m3u8"
+    },
+    {
+      "name": "Travelxp 4K HDR (2160p) [Geo-blocked]",
+      "id": "Travelxp.in@4KHDR",
+      "country": "India",
+      "resolution": 2160,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_TRAVELXP/images/LOGO_HD/image.png",
+      "group": "Travel",
+      "geoBlocked": true,
+      "url": "https://deltatesttatasky.akamaized.net/out/i/968284.m3u8"
+    },
+    {
+      "name": "Travelxp HD (1080p) [Geo-blocked]",
+      "id": "Travelxp.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_TRAVELXP/images/LOGO_HD/image.png",
+      "group": "Travel",
+      "geoBlocked": true,
+      "url": "https://amg00416-amg00416c9-samsung-in-4882.playouts.now.amagi.tv/playlist/amg00416-travelxp-travelxphd-samsungin/playlist.m3u8"
+    },
+    {
+      "name": "TV9 Bangla (1080p)",
+      "id": "TV9Bangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_TV9_BANGLA/images/LOGO_HD/image.png",
+      "group": "News",
+      "geoBlocked": false,
+      "url": "https://amg01106-amg01106c1-amgplt0747.playout.now3.amagi.tv/amg01106c1/hls.m3u8"
+    },
+    {
+      "name": "U Bangla (1080p)",
+      "id": "UBangla.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/U_Bangla.png",
+      "group": "Undefined",
+      "geoBlocked": false,
+      "url": "https://stream.ottlive.co.in/ubangla/index.m3u8"
+    },
+    {
+      "name": "ZB Bhakti (720p)",
+      "id": "ZBBhakti.in@HD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/zbbhakti.png",
+      "group": "Religious",
+      "geoBlocked": false,
+      "url": "https://server.zillarbarta.com/zbbhakti/index.m3u8"
+    },
+    {
+      "name": "ZB Cartoon (1080p)",
+      "id": "ZBCartoon.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/zbcatun.png",
+      "group": "Kids",
+      "geoBlocked": false,
+      "url": "https://server.zillarbarta.com/zbcatun/video.m3u8"
+    },
+    {
+      "name": "ZB Cinema (1080p)",
+      "id": "ZBCinema.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/ZBCINEMA.png",
+      "group": "Classic;Movies",
+      "geoBlocked": false,
+      "url": "https://server.zillarbarta.com/ZBCINEMA/index.m3u8"
+    },
+    {
+      "name": "ZB Music (720p)",
+      "id": "ZBMusic.in@HD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/zbmusic.png",
+      "group": "Music",
+      "geoBlocked": false,
+      "url": "https://server.zillarbarta.com/zbmusic/index.m3u8"
+    },
+    {
+      "name": "Zee Bangla HD (1080p)",
+      "id": "ZeeBangla.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ZEE_BANGLA/images/LOGO_HD/LOGO_HD_image.png",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://livetv.shamon-cable.net:8443/ZEE-Bangla/index.m3u8"
+    },
+    {
+      "name": "Zodiak TV (1080p)",
+      "id": "ZodiakTV.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://i.imgur.com/gE166hZ.jpeg",
+      "group": "Entertainment",
+      "geoBlocked": false,
+      "url": "https://ranacable.duckdns.org/ZodiakTv/index.m3u8"
+    }
+  ]
+}
