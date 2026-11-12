@@ -58,6 +58,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -343,6 +348,7 @@ private fun TvExperience(
     var query by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
     var searchButtonFocused by remember { mutableStateOf(false) }
+    var refreshButtonFocused by remember { mutableStateOf(false) }
     val searchFocusRequester = remember { FocusRequester() }
     LaunchedEffect(searchActive) {
         if (searchActive) searchFocusRequester.requestFocus()
@@ -361,6 +367,7 @@ private fun TvExperience(
     var updateDialog by remember { mutableStateOf<TvUpdateDialogState?>(null) }
     var requiredUpdateInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
     var latestAvailableInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var latestInstalledVersionCode by remember { mutableStateOf<Long?>(null) }
     var activeDownloadVersionCode by remember { mutableStateOf<Long?>(null) }
     var pendingInstallUri by remember { mutableStateOf<Uri?>(null) }
     var completedDownload by remember { mutableStateOf<Pair<Long, Uri>?>(null) }
@@ -436,7 +443,7 @@ private fun TvExperience(
         }
     }
 
-    fun checkForUpdates() {
+    fun checkForUpdates(showUpToDateDialog: Boolean = true) {
         if (checkingUpdate || isDownloadingUpdate) return
         checkingUpdate = true
         updateStatus = "Checking for updates…"
@@ -456,19 +463,22 @@ private fun TvExperience(
                     is UpdateDecision.UpToDate -> {
                         requiredUpdateInfo = null
                         latestAvailableInfo = null
+                        latestInstalledVersionCode = null
                         val installedVersion = packageInfo.versionName ?: "installed"
                         updateStatus = "You’re using the latest version ($installedVersion)."
-                        TvUpdateDialogState.UpToDate(installedVersion)
+                        if (showUpToDateDialog) TvUpdateDialogState.UpToDate(installedVersion) else null
                     }
                     is UpdateDecision.Available -> {
                         requiredUpdateInfo = decision.info.takeIf { decision.mandatory }
                         latestAvailableInfo = decision.info
+                        latestInstalledVersionCode = installedVersionCode
                         updateStatus = "Version ${decision.info.latestVersion} is available."
-                        TvUpdateDialogState.Available(
+                        val availableDialog = TvUpdateDialogState.Available(
                             info = decision.info,
                             installedVersionCode = installedVersionCode,
                             mandatory = decision.mandatory
                         )
+                        if (showUpToDateDialog || decision.mandatory) availableDialog else null
                     }
                 }
             } catch (failure: CancellationException) {
@@ -481,6 +491,10 @@ private fun TvExperience(
                 checkingUpdate = false
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        checkForUpdates(showUpToDateDialog = false)
     }
 
     LaunchedEffect(downloadId) {
@@ -650,7 +664,25 @@ private fun TvExperience(
                             )
                         }
                     }
-                    IconButton(onClick = onRefresh, enabled = !loading) {
+                    IconButton(
+                        onClick = { if (!loading) onRefresh() },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (refreshButtonFocused) Color(0xFF252A37) else Color.Transparent
+                            )
+                            .border(
+                                width = if (refreshButtonFocused) 2.dp else 1.dp,
+                                color = if (refreshButtonFocused) {
+                                    Color(0xFFADC6FF)
+                                } else {
+                                    Color(0xFF424754)
+                                },
+                                shape = CircleShape
+                            )
+                            .onFocusChanged { refreshButtonFocused = it.isFocused }
+                    ) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = "Refresh playlists",
@@ -684,14 +716,26 @@ private fun TvExperience(
                     }
                 }
             }
-            item {
-                TvUpdateCard(
-                    checking = checkingUpdate,
-                    downloading = isDownloadingUpdate,
-                    progress = updateProgress,
-                    status = updateStatus,
-                    onClick = ::checkForUpdates
-                )
+            if (latestAvailableInfo != null) {
+                item(key = "tv_update_available") {
+                    TvUpdateCard(
+                        version = latestAvailableInfo!!.latestVersion,
+                        downloading = isDownloadingUpdate,
+                        progress = updateProgress,
+                        status = updateStatus,
+                        onClick = {
+                            val info = latestAvailableInfo
+                            val installedVersionCode = latestInstalledVersionCode
+                            if (info != null && installedVersionCode != null) {
+                                updateDialog = TvUpdateDialogState.Available(
+                                    info = info,
+                                    installedVersionCode = installedVersionCode,
+                                    mandatory = requiredUpdateInfo != null
+                                )
+                            }
+                        }
+                    )
+                }
             }
             val favoriteChannels = filtered.filter { it.id in favorites }
             if (favoriteChannels.isNotEmpty()) {
@@ -893,18 +937,31 @@ private fun TvExperience(
 
 @Composable
 private fun TvUpdateCard(
-    checking: Boolean,
+    version: String,
     downloading: Boolean,
     progress: Float,
     status: String?,
     onClick: () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    val pulse by rememberInfiniteTransition(label = "update-button-pulse").animateFloat(
+        initialValue = 1f,
+        targetValue = 1.035f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "update-button-scale"
+    )
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = if (focused) 1.04f else pulse
+                scaleY = if (focused) 1.04f else pulse
+            }
             .onFocusChanged { focused = it.isFocused }
-            .clickable(enabled = !checking && !downloading, onClick = onClick)
+            .clickable(enabled = !downloading, onClick = onClick)
             .border(
                 width = if (focused) 2.dp else 1.dp,
                 color = if (focused) Color(0xFFADC6FF) else Color(0xFF424754),
@@ -919,9 +976,9 @@ private fun TvUpdateCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (checking || downloading) {
+            if (downloading) {
                 CircularProgressIndicator(
-                    progress = { if (downloading) progress else 0f },
+                    progress = { progress },
                     modifier = Modifier.size(28.dp),
                     color = Color(0xFFADC6FF),
                     trackColor = Color(0xFF424754)
@@ -929,13 +986,13 @@ private fun TvUpdateCard(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Check for Updates",
+                    "Update Available",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFDEE2F3)
                 )
                 Text(
-                    status ?: "Check for the latest Android TV version",
+                    status ?: "Version $version is ready to install",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFC2C6D6)
                 )
@@ -952,14 +1009,39 @@ private fun TvUpdateCard(
 }
 
 private enum class TvChannelSection(val title: String) {
-    BANGLADESH("Bangla TV Channels"),
-    INDIAN_BANGLA("Indian Bangla TV Channels"),
-    SPORTS("Sports & Global Networks"),
+    BANGLADESH("Bangladesh"),
+    INDIAN_BANGLA("Indian Bangla"),
+    INDIAN_MOVIES("Indian Movies"),
+    INDIAN_MUSIC("Indian Music"),
+    INDIAN_ENTERTAINMENT("Indian Entertainment"),
+    PAKISTANI("Pakistani"),
+    INTERNATIONAL("International"),
+    DOCUMENTARY_WILDLIFE("Documentary & Wildlife"),
+    KIDS("Kids"),
+    RELIGIOUS("Religious"),
+    SPORTS("Sports"),
     OTHER("Other Channels")
 }
 
 private fun TvChannel.homeSection(): TvChannelSection {
     val searchable = "${category.lowercase()} ${name.lowercase()}"
+    val normalizedCategory = category.trim().lowercase()
+        .replace("&", "and")
+        .replace(Regex("\\s+"), " ")
+    when (normalizedCategory) {
+        "bangladesh", "bangladeshi" -> return TvChannelSection.BANGLADESH
+        "indian bangla", "indian bengali" -> return TvChannelSection.INDIAN_BANGLA
+        "indian movies", "indian movie" -> return TvChannelSection.INDIAN_MOVIES
+        "indian music" -> return TvChannelSection.INDIAN_MUSIC
+        "indian entertainment" -> return TvChannelSection.INDIAN_ENTERTAINMENT
+        "pakistani", "pakistan" -> return TvChannelSection.PAKISTANI
+        "international" -> return TvChannelSection.INTERNATIONAL
+        "documentary and wildlife", "documentary", "wildlife" ->
+            return TvChannelSection.DOCUMENTARY_WILDLIFE
+        "kids", "children" -> return TvChannelSection.KIDS
+        "religious", "religion" -> return TvChannelSection.RELIGIOUS
+        "sports", "sport" -> return TvChannelSection.SPORTS
+    }
     val indianBanglaBrands = listOf(
         "zee bangla", "star jalsha", "jalsha movies", "colors bangla", "sun bangla",
         "abp ananda", "aakash aath", "ruposhi bangla", "sangeet bangla", "kolkata tv",
@@ -977,6 +1059,8 @@ private fun TvChannel.homeSection(): TvChannelSection {
         hasBanglaLabel || searchable.contains("bangladesh") || searchable.contains("bangladeshi") ->
             TvChannelSection.BANGLADESH
         sportsTerms.any(searchable::contains) -> TvChannelSection.SPORTS
+        searchable.contains("pakistan") || searchable.contains("pakistani") ->
+            TvChannelSection.PAKISTANI
         else -> TvChannelSection.OTHER
     }
 }
@@ -1277,7 +1361,17 @@ private fun TvPlayer(
             modifier = Modifier.fillMaxSize()
         )
         if (isBuffering && playbackError == null) {
-            LoadingGif(Modifier.fillMaxSize())
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x99000000)),
+                contentAlignment = Alignment.Center
+            ) {
+                CenteredChannelLoader(
+                    channelName = channel.name,
+                    logoUrl = channel.logo
+                )
+            }
         }
         playbackError?.let { message ->
             Column(
