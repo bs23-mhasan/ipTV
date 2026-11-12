@@ -115,7 +115,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
-import com.mhasancse15.iptv.channels.PremiumChannelRepository
 import com.mhasancse15.iptv.update.AppUpdateInfo
 import com.mhasancse15.iptv.update.AppDownloadStatus
 import com.mhasancse15.iptv.update.AppUpdateDownloader
@@ -142,15 +141,6 @@ private data class TvChannel(
     val logo: String,
     val category: String,
     val resolution: Int? = null
-)
-
-private fun com.mhasancse15.iptv.channels.PremiumChannel.toTvChannel() = TvChannel(
-    id = id,
-    name = name,
-    url = url,
-    logo = logo,
-    category = category,
-    resolution = resolution
 )
 
 private sealed interface TvUpdateDialogState {
@@ -181,31 +171,19 @@ class MainActivity : AppCompatActivity() {
             .getStringSet("favorite_ids", emptySet()).orEmpty().toSet()
         val preferences = getSharedPreferences("bdix_tv", MODE_PRIVATE)
         val cachedM3u = preferences.getString("playlist", null)
-        val cachedPremiumJson = preferences.getString("premium_channels_json", null)
         setContent {
             IPTVTheme {
                 var channels by remember { mutableStateOf(cachedM3u?.let(::parsePlaylist).orEmpty()) }
-                var premiumChannels by remember {
-                    mutableStateOf(
-                        cachedPremiumJson?.let { cached ->
-                            runCatching {
-                                PremiumChannelRepository.parseChannels(cached).map { it.toTvChannel() }
-                            }.getOrDefault(emptyList())
-                        }.orEmpty()
-                    )
-                }
-                var premiumError by remember { mutableStateOf<String?>(null) }
                 var favorites by remember { mutableStateOf(savedFavorites) }
                 var loading by remember {
-                    mutableStateOf(channels.isEmpty() && premiumChannels.isEmpty())
+                    mutableStateOf(channels.isEmpty())
                 }
                 var error by remember { mutableStateOf<String?>(null) }
                 var selectedIndex by remember { mutableIntStateOf(-1) }
                 var selectedChannelList by remember { mutableStateOf(emptyList<TvChannel>()) }
                 var selectedChannelRow by remember { mutableStateOf<String?>(null) }
-                val allChannels = channels + premiumChannels
+                val allChannels = channels
                 val selected = allChannels.getOrNull(selectedIndex)
-                val premiumRepository = remember { PremiumChannelRepository(client) }
 
                 fun selectAdjacentChannel(offset: Int) {
                     val sectionIndex = selectedChannelList.indexOfFirst { it.id == selected?.id }
@@ -250,27 +228,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                fun refreshPremiumChannels() {
-                    lifecycleScope.launch {
-                        premiumError = null
-                        try {
-                            val json = premiumRepository.fetchChannelsJson()
-                            val parsed = PremiumChannelRepository.parseChannels(json).map { it.toTvChannel() }
-                            if (parsed.isEmpty()) throw IOException("JSON contained no valid premium channels")
-                            premiumChannels = parsed
-                            preferences.edit().putString("premium_channels_json", json).apply()
-                        } catch (failure: Exception) {
-                            premiumError = getString(
-                                R.string.premium_refresh_failed,
-                                failure.message ?: getString(R.string.network_error)
-                            )
-                        }
-                    }
-                }
-
                 fun refreshAllChannels() {
                     refresh()
-                    refreshPremiumChannels()
                 }
 
                 LaunchedEffect(Unit) {
@@ -300,8 +259,6 @@ class MainActivity : AppCompatActivity() {
                 BackHandler(selectedIndex >= 0) { selectedIndex = -1 }
                 TvExperience(
                     channels = allChannels,
-                    premiumChannels = premiumChannels,
-                    premiumError = premiumError,
                     favorites = favorites,
                     selectedChannel = selected,
                     loading = loading,
@@ -347,8 +304,6 @@ class MainActivity : AppCompatActivity() {
 @Composable
 private fun TvExperience(
     channels: List<TvChannel>,
-    premiumChannels: List<TvChannel>,
-    premiumError: String?,
     favorites: Set<String>,
     selectedChannel: TvChannel?,
     loading: Boolean,
@@ -620,10 +575,6 @@ private fun TvExperience(
         query.isBlank() || it.name.contains(query, ignoreCase = true) ||
             it.category.contains(query, ignoreCase = true)
     }
-    val filteredPremiumChannels = premiumChannels.filter {
-        query.isBlank() || it.name.contains(query, ignoreCase = true) ||
-            it.category.contains(query, ignoreCase = true)
-    }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
@@ -784,16 +735,25 @@ private fun TvExperience(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
-                if (premiumError != null) {
-                    item {
-                        Text(
-                            premiumError,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.titleMedium
-                        )
+            }
+            TvChannelSection.topSections.forEach { section ->
+                    val sectionChannels = filtered.filter {
+                        it.homeSection() == section
+                    }
+                    if (sectionChannels.isNotEmpty()) {
+                        item(key = section.name) {
+                            TvChannelRow(
+                                title = stringResource(section.titleRes),
+                                channels = sectionChannels,
+                                favorites = favorites,
+                                selectedChannelId = selectedChannelId,
+                                selectedChannelRow = selectedChannelRow,
+                                onSelectChannel = onSelectChannel,
+                                onToggleFavorite = onToggleFavorite
+                            )
+                        }
                     }
                 }
-            }
             if (latestAvailableInfo != null) {
                 item(key = "tv_update_available") {
                     TvUpdateCard(
@@ -829,45 +789,29 @@ private fun TvExperience(
                     )
                 }
             }
-            if (filteredPremiumChannels.isNotEmpty()) {
-                item(key = "premium_channel_section") {
-                    TvChannelRow(
-                        title = stringResource(R.string.premium_channels),
-                        channels = filteredPremiumChannels,
-                        favorites = favorites,
-                        selectedChannelId = selectedChannelId,
-                        selectedChannelRow = selectedChannelRow,
-                        onSelectChannel = onSelectChannel,
-                        onToggleFavorite = onToggleFavorite
-                    )
-                }
-            }
-            val premiumIds = premiumChannels.mapTo(mutableSetOf()) { it.id }
-            TvChannelSection.entries.forEach { section ->
+            TvChannelSection.entries.filterNot { it in TvChannelSection.topSections }
+                .forEach { section ->
                 val sectionChannels = filtered.filter {
-                    it.id !in premiumIds &&
-                        it.homeSection() == section &&
-                        (section !in TvChannelSection.hdOnlySections ||
-                            (it.resolution ?: 0) >= 720)
+                    it.homeSection() == section
                 }
-                if (sectionChannels.isNotEmpty()) {
-                    item(key = section.name) {
-                        TvChannelRow(
-                            title = stringResource(section.titleRes),
-                            channels = sectionChannels,
-                            favorites = favorites,
-                            selectedChannelId = selectedChannelId,
-                            selectedChannelRow = selectedChannelRow,
-                            onSelectChannel = onSelectChannel,
-                            onToggleFavorite = onToggleFavorite
-                        )
+                    if (sectionChannels.isNotEmpty()) {
+                        item(key = section.name) {
+                            TvChannelRow(
+                                title = stringResource(section.titleRes),
+                                channels = sectionChannels,
+                                favorites = favorites,
+                                selectedChannelId = selectedChannelId,
+                                selectedChannelRow = selectedChannelRow,
+                                onSelectChannel = onSelectChannel,
+                                onToggleFavorite = onToggleFavorite
+                            )
+                        }
                     }
                 }
-            }
-            if (!loading && filtered.isEmpty() && filteredPremiumChannels.isEmpty()) {
+            if (!loading && filtered.isEmpty()) {
                 item {
                     Text(
-                        if (channels.isEmpty() && premiumChannels.isEmpty()) {
+                        if (channels.isEmpty()) {
                             stringResource(R.string.no_channels_available)
                         }
                         else stringResource(R.string.no_search_results),
@@ -1137,7 +1081,7 @@ private enum class TvChannelSection(@param:StringRes val titleRes: Int) {
     OTHER(R.string.section_other);
 
     companion object {
-        val hdOnlySections = setOf(BANGLADESH, INDIAN_BANGLA, INDIAN_MOVIES)
+        val topSections = listOf(BANGLADESH, INDIAN_BANGLA, INDIAN_MOVIES)
     }
 }
 

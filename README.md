@@ -12,8 +12,6 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Provides a separate TV browsing experience with D-pad-focusable channel cards, favorites, search, and remote-friendly playback controls.
 - Provides English and Bangla Android TV interfaces with a language switch beside the playlist refresh control; the selected language is persisted by Android.
 - Organizes Android TV channels into Bangladesh, Indian Bangla, Indian Movies, Indian Music, Indian Entertainment, Pakistani, International, Documentary & Wildlife, Kids, Religious, and Sports rows. Row counts reflect the channels currently loaded from the playlists.
-- Limits Bangladesh, Indian Bangla, and Indian Movies rows to channels with an explicitly listed resolution of 720p or higher; channels with unknown resolution are excluded from these rows.
-- Loads the generated `bangla_channels.json` on Android TV and shows its entries in a separate **Premium Channel** row; the last successful JSON response is cached for offline use.
 - Checks for Android TV app updates on request using the GitHub-hosted `tv/appinfo.json` manifest, with optional or mandatory update handling.
 - Stores the EPG cache in app-private storage and favorites/preferences locally.
 
@@ -22,7 +20,6 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Main: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/IPTV-Playlist.m3u`
 - International: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/International-Playlist.m3u`
 - XMLTV: `https://raw.githubusercontent.com/saeidrahmanbd/BDIX-IPTV/main/epg/epg.xml`
-- Android TV Premium Channel JSON: `https://raw.githubusercontent.com/bs23-mhasan/ipTV/master/bangla_channels.json`
 
 Only metadata present in a playlist is shown. Channels without a `tvg-country` or `country` attribute are not assigned an inferred country, and channels without a category are not placed in an invented category.
 
