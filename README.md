@@ -10,6 +10,7 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Supports channel search, category/country filtering, and a channel guide matched by `tvg-id`.
 - Plays supported HLS and direct streams with Media3, player retry/error feedback, previous/next channel controls, and a landscape mobile player.
 - Provides a separate TV browsing experience with D-pad-focusable channel cards, favorites, search, and remote-friendly playback controls.
+- Checks for Android TV app updates on request using the GitHub-hosted `tv/appinfo.json` manifest, with optional or mandatory update handling.
 - Stores the EPG cache in app-private storage and favorites/preferences locally.
 
 ## Playlist and EPG sources
@@ -57,6 +58,17 @@ These Gradle release outputs are unsigned and are not ready to install or distri
 - [Download mobile release APK](https://github.com/bs23-mhasan/ipTV/raw/refs/heads/master/mobile/release/mobile-release.apk)
 
 Open the repository root in Android Studio to run either application on a device or emulator. The TV app declares the Leanback launcher category; touch input is optional.
+
+## Publish an Android TV update
+
+The TV app checks `tv/appinfo.json` only when the user selects **Check for Updates**. For each TV release:
+
+1. Increase `versionCode` and update `versionName` in `tv/build.gradle.kts`.
+2. Build and sign the TV APK with the same signing key used for the installed release, then publish it at the URL in `tv/appinfo.json` (or update `download_url`).
+3. Update `latest_version`, `latest_version_code`, `minimum_supported_version_code`, and `release_notes` in `tv/appinfo.json`. Set `force_update` to `true` to require the newest version for all older installs; setting the minimum supported code above an installed version also requires an update.
+4. Publish the APK and manifest changes to the `master` branch so the raw GitHub manifest URL can serve them.
+
+The app compares Android version codes, not version-name strings. Update installation is confirmed by Android's package installer; on Android 8 and later, users may need to allow installs from BDIX TV in system settings.
 
 ## Project layout
 

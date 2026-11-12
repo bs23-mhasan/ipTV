@@ -1,12 +1,21 @@
 package com.mhasancse15.iptv
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.view.KeyEvent
 import android.view.WindowManager
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -39,8 +48,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -48,6 +59,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -55,7 +67,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,7 +105,12 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
+import com.mhasancse15.iptv.update.AppUpdateInfo
+import com.mhasancse15.iptv.update.AppUpdateRepository
+import com.mhasancse15.iptv.update.UpdateDecision
+import com.mhasancse15.iptv.update.evaluateUpdate
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -110,6 +129,17 @@ private data class TvChannel(
     val logo: String,
     val category: String
 )
+
+private sealed interface TvUpdateDialogState {
+    data class Available(
+        val info: AppUpdateInfo,
+        val installedVersionCode: Long,
+        val mandatory: Boolean
+    ) : TvUpdateDialogState
+
+    data class UpToDate(val version: String) : TvUpdateDialogState
+    data class Error(val message: String) : TvUpdateDialogState
+}
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -210,6 +240,7 @@ class MainActivity : ComponentActivity() {
                     loading = loading,
                     error = error,
                     onRefresh = ::refresh,
+                    httpClient = client,
                     selectedChannelId = selected?.id,
                     selectedChannelRow = selectedChannelRow,
                     onSelectChannel = { channel, orderedChannels, rowKey ->
@@ -254,6 +285,7 @@ private fun TvExperience(
     loading: Boolean,
     error: String?,
     onRefresh: () -> Unit,
+    httpClient: OkHttpClient,
     selectedChannelId: String?,
     selectedChannelRow: String?,
     onSelectChannel: (TvChannel, List<TvChannel>, String) -> Unit,
@@ -270,6 +302,196 @@ private fun TvExperience(
         searchActive = false
     }
     val context = LocalContext.current
+    val updateScope = rememberCoroutineScope()
+    val updateRepository = remember(httpClient) { AppUpdateRepository(httpClient) }
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var updateStatus by remember { mutableStateOf<String?>(null) }
+    var updateProgress by remember { mutableFloatStateOf(0f) }
+    var downloadId by remember { mutableStateOf<Long?>(null) }
+    var updateDialog by remember { mutableStateOf<TvUpdateDialogState?>(null) }
+    var pendingInstallUri by remember { mutableStateOf<Uri?>(null) }
+    val isDownloadingUpdate = downloadId != null
+    val mandatoryUpdate = (updateDialog as? TvUpdateDialogState.Available)?.mandatory == true
+
+    fun openInstaller(uri: Uri) {
+        try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            )
+            updateStatus = "Opening Android package installer…"
+        } catch (failure: ActivityNotFoundException) {
+            updateStatus = "No package installer is available on this device."
+            updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+        } catch (failure: Exception) {
+            updateStatus = "Unable to open installer: ${failure.message ?: "unknown error"}"
+            updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+        }
+    }
+
+    val installSettingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        val uri = pendingInstallUri
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            context.packageManager.canRequestPackageInstalls() &&
+            uri != null
+        ) {
+            pendingInstallUri = null
+            openInstaller(uri)
+        } else {
+            updateStatus = "Allow installs from BDIX TV, then select Update now again."
+            if (!mandatoryUpdate) updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+        }
+    }
+
+    fun requestInstall(uri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !context.packageManager.canRequestPackageInstalls()
+        ) {
+            pendingInstallUri = uri
+            updateStatus = "Allow installs from BDIX TV in the next screen."
+            try {
+                installSettingsLauncher.launch(
+                    Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:${context.packageName}")
+                    )
+                )
+            } catch (failure: Exception) {
+                updateStatus = "Unable to open install settings: ${failure.message ?: "unknown error"}"
+                updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+            }
+        } else {
+            openInstaller(uri)
+        }
+    }
+
+    fun startApkDownload(info: AppUpdateInfo) {
+        if (isDownloadingUpdate) return
+        try {
+            val manager = context.getSystemService(DownloadManager::class.java)
+            val request = DownloadManager.Request(Uri.parse(info.downloadUrl))
+                .setTitle("${info.appName} ${info.latestVersion}")
+                .setDescription("Downloading Android TV update")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalFilesDir(
+                    context,
+                    Environment.DIRECTORY_DOWNLOADS,
+                    "bdix-tv-${info.latestVersionCode}.apk"
+                )
+            downloadId = manager.enqueue(request)
+            updateProgress = 0f
+            updateStatus = "Downloading version ${info.latestVersion}…"
+            if (!mandatoryUpdate) updateDialog = null
+        } catch (failure: Exception) {
+            updateStatus = "Unable to start download: ${failure.message ?: "unknown error"}"
+            updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+        }
+    }
+
+    fun checkForUpdates() {
+        if (checkingUpdate || isDownloadingUpdate) return
+        checkingUpdate = true
+        updateStatus = "Checking for updates…"
+        updateDialog = null
+        updateScope.launch {
+            try {
+                val info = updateRepository.fetchLatest()
+                val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                val installedVersionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    packageInfo.longVersionCode
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.versionCode.toLong()
+                }
+                updateDialog = when (val decision = evaluateUpdate(installedVersionCode, info)) {
+                    is UpdateDecision.UpToDate -> {
+                        val installedVersion = packageInfo.versionName ?: "installed"
+                        updateStatus = "You’re using the latest version ($installedVersion)."
+                        TvUpdateDialogState.UpToDate(installedVersion)
+                    }
+                    is UpdateDecision.Available -> {
+                        updateStatus = "Version ${decision.info.latestVersion} is available."
+                        TvUpdateDialogState.Available(
+                            info = decision.info,
+                            installedVersionCode = installedVersionCode,
+                            mandatory = decision.mandatory
+                        )
+                    }
+                }
+            } catch (failure: CancellationException) {
+                throw failure
+            } catch (failure: Exception) {
+                val message = "Update check failed: ${failure.message ?: "network error"}"
+                updateStatus = message
+                updateDialog = TvUpdateDialogState.Error(message)
+            } finally {
+                checkingUpdate = false
+            }
+        }
+    }
+
+    LaunchedEffect(downloadId) {
+        val id = downloadId ?: return@LaunchedEffect
+        val manager = context.getSystemService(DownloadManager::class.java)
+        while (true) {
+            val cursor = manager.query(DownloadManager.Query().setFilterById(id))
+            val completed = cursor.use { result ->
+                if (!result.moveToFirst()) {
+                    updateStatus = "Download was not found. Please check for updates and try again."
+                    updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                    downloadId = null
+                    return@LaunchedEffect
+                }
+                val status = result.getInt(result.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                when (status) {
+                    DownloadManager.STATUS_SUCCESSFUL -> {
+                        val uri = manager.getUriForDownloadedFile(id)
+                        if (uri == null) {
+                            updateStatus = "Download completed, but the APK could not be opened."
+                            updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                        } else {
+                            updateStatus = "Download complete. Opening installer…"
+                            requestInstall(uri)
+                        }
+                        downloadId = null
+                        true
+                    }
+                    DownloadManager.STATUS_FAILED -> {
+                        val reason = result.getInt(
+                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)
+                        )
+                        updateStatus = "APK download failed (error $reason). Check your connection and retry."
+                        updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                        downloadId = null
+                        true
+                    }
+                    else -> {
+                        val total = result.getLong(
+                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                        )
+                        val downloaded = result.getLong(
+                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                        )
+                        if (total > 0) {
+                            updateProgress = (downloaded.toFloat() / total).coerceIn(0f, 1f)
+                            updateStatus = "Downloading version ${"%.0f".format(updateProgress * 100)}%…"
+                        } else {
+                            updateStatus = "Downloading version…"
+                        }
+                        false
+                    }
+                }
+            }
+            if (completed) return@LaunchedEffect
+            delay(500)
+        }
+    }
+
+    BackHandler(enabled = mandatoryUpdate) {}
+
     var currentTime by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
         while (true) {
@@ -393,6 +615,15 @@ private fun TvExperience(
                     )
                 }
             }
+            item {
+                TvUpdateCard(
+                    checking = checkingUpdate,
+                    downloading = isDownloadingUpdate,
+                    progress = updateProgress,
+                    status = updateStatus,
+                    onClick = ::checkForUpdates
+                )
+            }
             val favoriteChannels = filtered.filter { it.id in favorites }
             if (favoriteChannels.isNotEmpty()) {
                 item {
@@ -454,7 +685,147 @@ private fun TvExperience(
             Text("BACK  Back", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
         }
         }
+        updateDialog?.let { dialog ->
+            AlertDialog(
+                onDismissRequest = {
+                    if (!mandatoryUpdate && !isDownloadingUpdate) updateDialog = null
+                },
+                title = {
+                    Text(
+                        when (dialog) {
+                            is TvUpdateDialogState.Available ->
+                                if (dialog.mandatory) "Required update" else "Update available"
+                            is TvUpdateDialogState.UpToDate -> "App is up to date"
+                            is TvUpdateDialogState.Error -> "Update problem"
+                        }
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        when (dialog) {
+                            is TvUpdateDialogState.Available -> {
+                                Text(
+                                    "Version ${dialog.info.latestVersion} is available. " +
+                                        "Installed version code: ${dialog.installedVersionCode}."
+                                )
+                                if (dialog.info.releaseNotes.isNotEmpty()) {
+                                    Text("What’s new:\n${dialog.info.releaseNotes.joinToString("\n") { "• $it" }}")
+                                }
+                                if (dialog.mandatory) {
+                                    Text("This update is required to continue using BDIX TV.")
+                                }
+                                if (isDownloadingUpdate) {
+                                    Text(updateStatus ?: "Downloading update…")
+                                    CircularProgressIndicator(
+                                        progress = { updateProgress },
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            is TvUpdateDialogState.UpToDate ->
+                                Text("You are using the latest version (${dialog.version}).")
+                            is TvUpdateDialogState.Error -> Text(dialog.message)
+                        }
+                    }
+                },
+                confirmButton = {
+                    when (dialog) {
+                        is TvUpdateDialogState.Available -> {
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = { startApkDownload(dialog.info) }) {
+                                    Text("Update now")
+                                }
+                            }
+                        }
+                        is TvUpdateDialogState.UpToDate -> {
+                            TextButton(onClick = { updateDialog = null }) { Text("OK") }
+                        }
+                        is TvUpdateDialogState.Error -> {
+                            TextButton(onClick = {
+                                updateDialog = null
+                                checkForUpdates()
+                            }) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                },
+                dismissButton = {
+                    when (dialog) {
+                        is TvUpdateDialogState.Available -> {
+                            if (!dialog.mandatory && !isDownloadingUpdate) {
+                                TextButton(onClick = { updateDialog = null }) { Text("Later") }
+                            }
+                        }
+                        is TvUpdateDialogState.Error -> {
+                            TextButton(onClick = { updateDialog = null }) { Text("Close") }
+                        }
+                        is TvUpdateDialogState.UpToDate -> Unit
+                    }
+                }
+            )
+        }
         selectedChannel?.let { TvPlayer(channel = it) }
+    }
+}
+
+@Composable
+private fun TvUpdateCard(
+    checking: Boolean,
+    downloading: Boolean,
+    progress: Float,
+    status: String?,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.isFocused }
+            .clickable(enabled = !checking && !downloading, onClick = onClick)
+            .border(
+                width = if (focused) 2.dp else 1.dp,
+                color = if (focused) Color(0xFFADC6FF) else Color(0xFF424754),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1F2C))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 22.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (checking || downloading) {
+                CircularProgressIndicator(
+                    progress = { if (downloading) progress else 0f },
+                    modifier = Modifier.size(28.dp),
+                    color = Color(0xFFADC6FF),
+                    trackColor = Color(0xFF424754)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Check for Updates",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFDEE2F3)
+                )
+                Text(
+                    status ?: "Check for the latest Android TV version",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFC2C6D6)
+                )
+            }
+            if (downloading) {
+                Text(
+                    "${(progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFFADC6FF)
+                )
+            }
+        }
     }
 }
 
