@@ -34,6 +34,15 @@ class PremiumChannelRepositoryTest {
     }
 
     @Test
+    fun parsesResolutionFromNumberOrQualityLabel() {
+        val channels = PremiumChannelRepository.parseChannels(
+            """{"channels":[{"name":"Movie HD","url":"https://example.com/a","resolution":1080},{"name":"Bangla HD","url":"https://example.com/b","resolution":"720p"}]}"""
+        )
+
+        assertEquals(listOf(1080, 720), channels.map { it.resolution })
+    }
+
+    @Test
     fun rejectsMissingChannelsArray() {
         val error = runCatching { PremiumChannelRepository.parseChannels("""{"total":0}""") }
             .exceptionOrNull()

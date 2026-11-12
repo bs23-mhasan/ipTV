@@ -18,7 +18,8 @@ data class PremiumChannel(
     val name: String,
     val url: String,
     val logo: String,
-    val category: String
+    val category: String,
+    val resolution: Int? = null
 )
 
 const val PREMIUM_CHANNELS_URL =
@@ -58,12 +59,19 @@ class PremiumChannelRepository(private val httpClient: OkHttpClient) {
                 val id = "premium:" + sourceId.ifBlank {
                     UUID.nameUUIDFromBytes("$name\n$url".toByteArray(Charsets.UTF_8)).toString()
                 }
+                val resolutionValue = (item["resolution"] as? JsonPrimitive)?.content
+                val resolution = resolutionValue?.toIntOrNull()
+                    ?: resolutionValue?.let {
+                        Regex("""(?<!\d)(\d{3,4})\s*p\b""", RegexOption.IGNORE_CASE)
+                            .find(it)?.groupValues?.get(1)?.toIntOrNull()
+                    }
                 PremiumChannel(
                     id = id,
                     name = name,
                     url = url,
                     logo = string("logo"),
-                    category = string("group")
+                    category = string("group"),
+                    resolution = resolution
                 )
             }.distinctBy { it.id }
         }

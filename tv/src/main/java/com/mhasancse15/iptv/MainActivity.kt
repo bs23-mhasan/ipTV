@@ -133,7 +133,8 @@ private data class TvChannel(
     val name: String,
     val url: String,
     val logo: String,
-    val category: String
+    val category: String,
+    val resolution: Int? = null
 )
 
 private fun com.mhasancse15.iptv.channels.PremiumChannel.toTvChannel() = TvChannel(
@@ -141,7 +142,8 @@ private fun com.mhasancse15.iptv.channels.PremiumChannel.toTvChannel() = TvChann
     name = name,
     url = url,
     logo = logo,
-    category = category
+    category = category,
+    resolution = resolution
 )
 
 private sealed interface TvUpdateDialogState {
@@ -767,7 +769,10 @@ private fun TvExperience(
             val premiumIds = premiumChannels.mapTo(mutableSetOf()) { it.id }
             TvChannelSection.entries.forEach { section ->
                 val sectionChannels = filtered.filter {
-                    it.id !in premiumIds && it.homeSection() == section
+                    it.id !in premiumIds &&
+                        it.homeSection() == section &&
+                        (section !in TvChannelSection.hdOnlySections ||
+                            (it.resolution ?: 0) >= 720)
                 }
                 if (sectionChannels.isNotEmpty()) {
                     item(key = section.title) {
@@ -1020,7 +1025,11 @@ private enum class TvChannelSection(val title: String) {
     KIDS("Kids"),
     RELIGIOUS("Religious"),
     SPORTS("Sports"),
-    OTHER("Other Channels")
+    OTHER("Other Channels");
+
+    companion object {
+        val hdOnlySections = setOf(BANGLADESH, INDIAN_BANGLA, INDIAN_MOVIES)
+    }
 }
 
 private fun TvChannel.homeSection(): TvChannelSection {
@@ -1416,7 +1425,19 @@ private fun parsePlaylist(content: String): List<TvChannel> {
                 val id = tvgId.ifBlank {
                     UUID.nameUUIDFromBytes("$name\n$line".toByteArray(Charsets.UTF_8)).toString()
                 }
-                channels += TvChannel(id, name, line, attribute("tvg-logo"), category)
+                val resolution = Regex("""(?<!\d)(\d{3,4})\s*p\b""", RegexOption.IGNORE_CASE)
+                    .find(name)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
+                channels += TvChannel(
+                    id = id,
+                    name = name,
+                    url = line,
+                    logo = attribute("tvg-logo"),
+                    category = category,
+                    resolution = resolution
+                )
             }
             metadata = ""
         }
