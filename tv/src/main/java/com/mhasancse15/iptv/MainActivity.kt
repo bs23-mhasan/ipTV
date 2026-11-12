@@ -736,24 +736,36 @@ private fun TvExperience(
                     )
                 }
             }
+            val favoriteChannels = filtered.filter { it.id in favorites }
+            if (favoriteChannels.isNotEmpty()) {
+                item(key = "favorite_section") {
+                    TvChannelRow(
+                        title = stringResource(R.string.favorites),
+                        channels = favoriteChannels,
+                        favorites = favorites,
+                        selectedChannelId = selectedChannelId,
+                        selectedChannelRow = selectedChannelRow,
+                        onSelectChannel = onSelectChannel,
+                        onToggleFavorite = onToggleFavorite
+                    )
+                }
+            }
             TvChannelSection.topSections.forEach { section ->
-                    val sectionChannels = filtered.filter {
-                        it.homeSection() == section
-                    }
-                    if (sectionChannels.isNotEmpty()) {
-                        item(key = section.name) {
-                            TvChannelRow(
-                                title = stringResource(section.titleRes),
-                                channels = sectionChannels,
-                                favorites = favorites,
-                                selectedChannelId = selectedChannelId,
-                                selectedChannelRow = selectedChannelRow,
-                                onSelectChannel = onSelectChannel,
-                                onToggleFavorite = onToggleFavorite
-                            )
-                        }
+                val sectionChannels = filtered.filter { it.homeSection() == section }
+                if (sectionChannels.isNotEmpty()) {
+                    item(key = section.name) {
+                        TvChannelRow(
+                            title = stringResource(section.titleRes),
+                            channels = sectionChannels,
+                            favorites = favorites,
+                            selectedChannelId = selectedChannelId,
+                            selectedChannelRow = selectedChannelRow,
+                            onSelectChannel = onSelectChannel,
+                            onToggleFavorite = onToggleFavorite
+                        )
                     }
                 }
+            }
             if (latestAvailableInfo != null) {
                 item(key = "tv_update_available") {
                     TvUpdateCard(
@@ -775,25 +787,9 @@ private fun TvExperience(
                     )
                 }
             }
-            val favoriteChannels = filtered.filter { it.id in favorites }
-            if (favoriteChannels.isNotEmpty()) {
-                item {
-                    TvChannelRow(
-                        title = stringResource(R.string.favorites),
-                        channels = favoriteChannels,
-                        favorites = favorites,
-                        selectedChannelId = selectedChannelId,
-                        selectedChannelRow = selectedChannelRow,
-                        onSelectChannel = onSelectChannel,
-                        onToggleFavorite = onToggleFavorite
-                    )
-                }
-            }
             TvChannelSection.entries.filterNot { it in TvChannelSection.topSections }
                 .forEach { section ->
-                val sectionChannels = filtered.filter {
-                    it.homeSection() == section
-                }
+                    val sectionChannels = filtered.filter { it.homeSection() == section }
                     if (sectionChannels.isNotEmpty()) {
                         item(key = section.name) {
                             TvChannelRow(
