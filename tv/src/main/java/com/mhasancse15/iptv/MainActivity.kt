@@ -1,13 +1,11 @@
 package com.mhasancse15.iptv
 
 import android.annotation.SuppressLint
-import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.provider.Settings
@@ -106,6 +104,8 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.mhasancse15.iptv.ui.theme.IPTVTheme
 import com.mhasancse15.iptv.update.AppUpdateInfo
+import com.mhasancse15.iptv.update.AppDownloadStatus
+import com.mhasancse15.iptv.update.AppUpdateDownloader
 import com.mhasancse15.iptv.update.AppUpdateRepository
 import com.mhasancse15.iptv.update.UpdateDecision
 import com.mhasancse15.iptv.update.evaluateUpdate
@@ -304,14 +304,19 @@ private fun TvExperience(
     val context = LocalContext.current
     val updateScope = rememberCoroutineScope()
     val updateRepository = remember(httpClient) { AppUpdateRepository(httpClient) }
+    val updateDownloader = remember(context) { AppUpdateDownloader(context) }
     var checkingUpdate by remember { mutableStateOf(false) }
     var updateStatus by remember { mutableStateOf<String?>(null) }
     var updateProgress by remember { mutableFloatStateOf(0f) }
     var downloadId by remember { mutableStateOf<Long?>(null) }
     var updateDialog by remember { mutableStateOf<TvUpdateDialogState?>(null) }
+    var requiredUpdateInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var latestAvailableInfo by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var activeDownloadVersionCode by remember { mutableStateOf<Long?>(null) }
     var pendingInstallUri by remember { mutableStateOf<Uri?>(null) }
+    var completedDownload by remember { mutableStateOf<Pair<Long, Uri>?>(null) }
     val isDownloadingUpdate = downloadId != null
-    val mandatoryUpdate = (updateDialog as? TvUpdateDialogState.Available)?.mandatory == true
+    val mandatoryUpdate = requiredUpdateInfo != null
 
     fun openInstaller(uri: Uri) {
         try {
@@ -371,17 +376,8 @@ private fun TvExperience(
     fun startApkDownload(info: AppUpdateInfo) {
         if (isDownloadingUpdate) return
         try {
-            val manager = context.getSystemService(DownloadManager::class.java)
-            val request = DownloadManager.Request(Uri.parse(info.downloadUrl))
-                .setTitle("${info.appName} ${info.latestVersion}")
-                .setDescription("Downloading Android TV update")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalFilesDir(
-                    context,
-                    Environment.DIRECTORY_DOWNLOADS,
-                    "bdix-tv-${info.latestVersionCode}.apk"
-                )
-            downloadId = manager.enqueue(request)
+            activeDownloadVersionCode = info.latestVersionCode
+            downloadId = updateDownloader.enqueue(info)
             updateProgress = 0f
             updateStatus = "Downloading version ${info.latestVersion}…"
             if (!mandatoryUpdate) updateDialog = null
@@ -396,6 +392,7 @@ private fun TvExperience(
         checkingUpdate = true
         updateStatus = "Checking for updates…"
         updateDialog = null
+        latestAvailableInfo = null
         updateScope.launch {
             try {
                 val info = updateRepository.fetchLatest()
@@ -408,11 +405,15 @@ private fun TvExperience(
                 }
                 updateDialog = when (val decision = evaluateUpdate(installedVersionCode, info)) {
                     is UpdateDecision.UpToDate -> {
+                        requiredUpdateInfo = null
+                        latestAvailableInfo = null
                         val installedVersion = packageInfo.versionName ?: "installed"
                         updateStatus = "You’re using the latest version ($installedVersion)."
                         TvUpdateDialogState.UpToDate(installedVersion)
                     }
                     is UpdateDecision.Available -> {
+                        requiredUpdateInfo = decision.info.takeIf { decision.mandatory }
+                        latestAvailableInfo = decision.info
                         updateStatus = "Version ${decision.info.latestVersion} is available."
                         TvUpdateDialogState.Available(
                             info = decision.info,
@@ -435,55 +436,61 @@ private fun TvExperience(
 
     LaunchedEffect(downloadId) {
         val id = downloadId ?: return@LaunchedEffect
-        val manager = context.getSystemService(DownloadManager::class.java)
         while (true) {
-            val cursor = manager.query(DownloadManager.Query().setFilterById(id))
-            val completed = cursor.use { result ->
-                if (!result.moveToFirst()) {
-                    updateStatus = "Download was not found. Please check for updates and try again."
-                    updateDialog = TvUpdateDialogState.Error(updateStatus!!)
-                    downloadId = null
-                    return@LaunchedEffect
-                }
-                val status = result.getInt(result.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                when (status) {
-                    DownloadManager.STATUS_SUCCESSFUL -> {
-                        val uri = manager.getUriForDownloadedFile(id)
+            val completed = try {
+                when (val status = updateDownloader.status(id)) {
+                    AppDownloadStatus.Missing -> {
+                        updateStatus = "Download was not found. Please check for updates and try again."
+                        updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                        downloadId = null
+                        activeDownloadVersionCode = null
+                        true
+                    }
+                    AppDownloadStatus.Complete -> {
+                        val uri = updateDownloader.downloadedUri(id)
                         if (uri == null) {
                             updateStatus = "Download completed, but the APK could not be opened."
                             updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                         } else {
-                            updateStatus = "Download complete. Opening installer…"
-                            requestInstall(uri)
+                            val versionCode = activeDownloadVersionCode
+                            if (versionCode == null) {
+                                updateStatus = "Downloaded APK version could not be verified. Please retry."
+                                updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                            } else {
+                                completedDownload = versionCode to uri
+                                updateStatus = "Download complete. Opening installer…"
+                                requestInstall(uri)
+                            }
                         }
+                        activeDownloadVersionCode = null
                         downloadId = null
                         true
                     }
-                    DownloadManager.STATUS_FAILED -> {
-                        val reason = result.getInt(
-                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)
-                        )
-                        updateStatus = "APK download failed (error $reason). Check your connection and retry."
+                    is AppDownloadStatus.Failed -> {
+                        updateStatus = "APK download failed (error ${status.reason}). Check your connection and retry."
                         updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                         downloadId = null
+                        activeDownloadVersionCode = null
                         true
                     }
-                    else -> {
-                        val total = result.getLong(
-                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-                        )
-                        val downloaded = result.getLong(
-                            result.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-                        )
-                        if (total > 0) {
-                            updateProgress = (downloaded.toFloat() / total).coerceIn(0f, 1f)
-                            updateStatus = "Downloading version ${"%.0f".format(updateProgress * 100)}%…"
+                    is AppDownloadStatus.Running -> {
+                        if (status.progress != null) {
+                            updateProgress = status.progress
+                            updateStatus = "Downloading version ${(updateProgress * 100).toInt()}%…"
                         } else {
                             updateStatus = "Downloading version…"
                         }
                         false
                     }
                 }
+            } catch (failure: CancellationException) {
+                throw failure
+            } catch (failure: Exception) {
+                updateStatus = "Unable to check download progress: ${failure.message ?: "unknown error"}"
+                updateDialog = TvUpdateDialogState.Error(updateStatus!!)
+                downloadId = null
+                activeDownloadVersionCode = null
+                return@LaunchedEffect
             }
             if (completed) return@LaunchedEffect
             delay(500)
@@ -724,7 +731,21 @@ private fun TvExperience(
                             }
                             is TvUpdateDialogState.UpToDate ->
                                 Text("You are using the latest version (${dialog.version}).")
-                            is TvUpdateDialogState.Error -> Text(dialog.message)
+                            is TvUpdateDialogState.Error -> {
+                                Text(
+                                    if (mandatoryUpdate && isDownloadingUpdate) {
+                                        updateStatus ?: "Retrying required update…"
+                                    } else {
+                                        dialog.message
+                                    }
+                                )
+                                if (mandatoryUpdate && isDownloadingUpdate) {
+                                    CircularProgressIndicator(
+                                        progress = { updateProgress },
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
                         }
                     }
                 },
@@ -732,7 +753,13 @@ private fun TvExperience(
                     when (dialog) {
                         is TvUpdateDialogState.Available -> {
                             if (!isDownloadingUpdate) {
-                                TextButton(onClick = { startApkDownload(dialog.info) }) {
+                                TextButton(onClick = {
+                                    val downloadedUpdate = completedDownload
+                                    if (downloadedUpdate?.first == dialog.info.latestVersionCode) {
+                                        requestInstall(downloadedUpdate.second)
+                                    }
+                                    else startApkDownload(dialog.info)
+                                }) {
                                     Text("Update now")
                                 }
                             }
@@ -741,11 +768,24 @@ private fun TvExperience(
                             TextButton(onClick = { updateDialog = null }) { Text("OK") }
                         }
                         is TvUpdateDialogState.Error -> {
-                            TextButton(onClick = {
-                                updateDialog = null
-                                checkForUpdates()
-                            }) {
-                                Text("Retry")
+                            if (!isDownloadingUpdate) {
+                                TextButton(onClick = {
+                                    val requiredInfo = requiredUpdateInfo
+                                    val downloadedUpdate = completedDownload
+                                    val latestInfo = latestAvailableInfo
+                                    if (downloadedUpdate != null &&
+                                        latestInfo?.latestVersionCode == downloadedUpdate.first
+                                    ) {
+                                        requestInstall(downloadedUpdate.second)
+                                    } else if (requiredInfo != null) {
+                                        startApkDownload(requiredInfo)
+                                    } else {
+                                        updateDialog = null
+                                        checkForUpdates()
+                                    }
+                                }) {
+                                    Text(if (mandatoryUpdate) "Retry update" else "Retry")
+                                }
                             }
                         }
                     }
@@ -758,7 +798,9 @@ private fun TvExperience(
                             }
                         }
                         is TvUpdateDialogState.Error -> {
-                            TextButton(onClick = { updateDialog = null }) { Text("Close") }
+                            if (!mandatoryUpdate && !isDownloadingUpdate) {
+                                TextButton(onClick = { updateDialog = null }) { Text("Close") }
+                            }
                         }
                         is TvUpdateDialogState.UpToDate -> Unit
                     }
