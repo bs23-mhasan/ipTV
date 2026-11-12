@@ -10,6 +10,7 @@ BDIX TV is a Kotlin IPTV client with separate Android mobile and Android TV appl
 - Supports channel search, category/country filtering, and a channel guide matched by `tvg-id`.
 - Plays supported HLS and direct streams with Media3, player retry/error feedback, previous/next channel controls, and a landscape mobile player.
 - Provides a separate TV browsing experience with D-pad-focusable channel cards, favorites, search, and remote-friendly playback controls.
+- Provides English and Bangla Android TV interfaces with a language switch beside the playlist refresh control; the selected language is persisted by Android.
 - Organizes Android TV channels into Bangladesh, Indian Bangla, Indian Movies, Indian Music, Indian Entertainment, Pakistani, International, Documentary & Wildlife, Kids, Religious, and Sports rows. Row counts reflect the channels currently loaded from the playlists.
 - Limits Bangladesh, Indian Bangla, and Indian Movies rows to channels with an explicitly listed resolution of 720p or higher; channels with unknown resolution are excluded from these rows.
 - Loads the generated `bangla_channels.json` on Android TV and shows its entries in a separate **Premium Channel** row; the last successful JSON response is cached for offline use.

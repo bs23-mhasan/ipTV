@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
 import coil.compose.AsyncImage
@@ -21,7 +22,7 @@ fun LoadingGif(modifier: Modifier = Modifier) {
     AsyncImage(
         model = R.raw.loader,
         imageLoader = imageLoader,
-        contentDescription = "Loading",
+        contentDescription = stringResource(R.string.loading),
         contentScale = ContentScale.Crop,
         modifier = modifier
     )

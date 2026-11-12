@@ -9,11 +9,14 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -46,6 +49,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,6 +78,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -88,6 +93,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -95,6 +101,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
@@ -158,7 +165,7 @@ private sealed interface TvUpdateDialogState {
 }
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private var playerChannelKeyHandler: ((Int) -> Boolean)? = null
 
     private val client by lazy {
@@ -233,7 +240,10 @@ class MainActivity : ComponentActivity() {
                             getSharedPreferences("bdix_tv", MODE_PRIVATE).edit()
                                 .putString("playlist", playlist).apply()
                         } catch (failure: Exception) {
-                            error = "Refresh failed: ${failure.message ?: "network error"}"
+                            error = getString(
+                                R.string.refresh_failed,
+                                failure.message ?: getString(R.string.network_error)
+                            )
                         } finally {
                             loading = false
                         }
@@ -250,7 +260,10 @@ class MainActivity : ComponentActivity() {
                             premiumChannels = parsed
                             preferences.edit().putString("premium_channels_json", json).apply()
                         } catch (failure: Exception) {
-                            premiumError = "Premium channels refresh failed: ${failure.message ?: "network error"}"
+                            premiumError = getString(
+                                R.string.premium_refresh_failed,
+                                failure.message ?: getString(R.string.network_error)
+                            )
                         }
                     }
                 }
@@ -350,15 +363,26 @@ private fun TvExperience(
     var query by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
     var searchButtonFocused by remember { mutableStateOf(false) }
+    var languageButtonFocused by remember { mutableStateOf(false) }
     var refreshButtonFocused by remember { mutableStateOf(false) }
+    var restoreLanguageFocus by rememberSaveable { mutableStateOf(false) }
     val searchFocusRequester = remember { FocusRequester() }
+    val languageFocusRequester = remember { FocusRequester() }
     LaunchedEffect(searchActive) {
         if (searchActive) searchFocusRequester.requestFocus()
+    }
+    LaunchedEffect(Unit) {
+        if (restoreLanguageFocus) {
+            languageFocusRequester.requestFocus()
+            restoreLanguageFocus = false
+        }
     }
     BackHandler(enabled = searchActive && selectedChannel == null) {
         searchActive = false
     }
     val context = LocalContext.current
+    val activeLanguage = AppCompatDelegate.getApplicationLocales().get(0)?.language
+        ?: context.resources.configuration.locales[0]?.language
     val updateScope = rememberCoroutineScope()
     val updateRepository = remember(httpClient) { AppUpdateRepository(httpClient) }
     val updateDownloader = remember(context) { AppUpdateDownloader(context) }
@@ -383,12 +407,15 @@ private fun TvExperience(
                     .setDataAndType(uri, "application/vnd.android.package-archive")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             )
-            updateStatus = "Opening Android package installer…"
+            updateStatus = context.getString(R.string.opening_installer)
         } catch (failure: ActivityNotFoundException) {
-            updateStatus = "No package installer is available on this device."
+            updateStatus = context.getString(R.string.installer_unavailable)
             updateDialog = TvUpdateDialogState.Error(updateStatus!!)
         } catch (failure: Exception) {
-            updateStatus = "Unable to open installer: ${failure.message ?: "unknown error"}"
+            updateStatus = context.getString(
+                R.string.installer_open_failed,
+                failure.message ?: context.getString(R.string.unknown_error)
+            )
             updateDialog = TvUpdateDialogState.Error(updateStatus!!)
         }
     }
@@ -404,7 +431,7 @@ private fun TvExperience(
             pendingInstallUri = null
             openInstaller(uri)
         } else {
-            updateStatus = "Allow installs from BDIX TV, then select Update now again."
+            updateStatus = context.getString(R.string.allow_installs_retry)
             if (!mandatoryUpdate) updateDialog = TvUpdateDialogState.Error(updateStatus!!)
         }
     }
@@ -414,7 +441,7 @@ private fun TvExperience(
             !context.packageManager.canRequestPackageInstalls()
         ) {
             pendingInstallUri = uri
-            updateStatus = "Allow installs from BDIX TV in the next screen."
+            updateStatus = context.getString(R.string.allow_installs_next)
             try {
                 installSettingsLauncher.launch(
                     Intent(
@@ -423,7 +450,10 @@ private fun TvExperience(
                     )
                 )
             } catch (failure: Exception) {
-                updateStatus = "Unable to open install settings: ${failure.message ?: "unknown error"}"
+                updateStatus = context.getString(
+                    R.string.install_settings_failed,
+                    failure.message ?: context.getString(R.string.unknown_error)
+                )
                 updateDialog = TvUpdateDialogState.Error(updateStatus!!)
             }
         } else {
@@ -437,10 +467,13 @@ private fun TvExperience(
             activeDownloadVersionCode = info.latestVersionCode
             downloadId = updateDownloader.enqueue(info)
             updateProgress = 0f
-            updateStatus = "Downloading version ${info.latestVersion}…"
+            updateStatus = context.getString(R.string.downloading_version, info.latestVersion)
             if (!mandatoryUpdate) updateDialog = null
         } catch (failure: Exception) {
-            updateStatus = "Unable to start download: ${failure.message ?: "unknown error"}"
+            updateStatus = context.getString(
+                R.string.download_start_failed,
+                failure.message ?: context.getString(R.string.unknown_error)
+            )
             updateDialog = TvUpdateDialogState.Error(updateStatus!!)
         }
     }
@@ -448,7 +481,7 @@ private fun TvExperience(
     fun checkForUpdates(showUpToDateDialog: Boolean = true) {
         if (checkingUpdate || isDownloadingUpdate) return
         checkingUpdate = true
-        updateStatus = "Checking for updates…"
+        updateStatus = context.getString(R.string.checking_updates)
         updateDialog = null
         latestAvailableInfo = null
         updateScope.launch {
@@ -467,14 +500,17 @@ private fun TvExperience(
                         latestAvailableInfo = null
                         latestInstalledVersionCode = null
                         val installedVersion = packageInfo.versionName ?: "installed"
-                        updateStatus = "You’re using the latest version ($installedVersion)."
+                        updateStatus = context.getString(R.string.latest_version_status, installedVersion)
                         if (showUpToDateDialog) TvUpdateDialogState.UpToDate(installedVersion) else null
                     }
                     is UpdateDecision.Available -> {
                         requiredUpdateInfo = decision.info.takeIf { decision.mandatory }
                         latestAvailableInfo = decision.info
                         latestInstalledVersionCode = installedVersionCode
-                        updateStatus = "Version ${decision.info.latestVersion} is available."
+                        updateStatus = context.getString(
+                            R.string.version_available_status,
+                            decision.info.latestVersion
+                        )
                         val availableDialog = TvUpdateDialogState.Available(
                             info = decision.info,
                             installedVersionCode = installedVersionCode,
@@ -486,7 +522,10 @@ private fun TvExperience(
             } catch (failure: CancellationException) {
                 throw failure
             } catch (failure: Exception) {
-                val message = "Update check failed: ${failure.message ?: "network error"}"
+                val message = context.getString(
+                    R.string.update_check_failed,
+                    failure.message ?: context.getString(R.string.network_error)
+                )
                 updateStatus = message
                 updateDialog = TvUpdateDialogState.Error(message)
             } finally {
@@ -505,7 +544,7 @@ private fun TvExperience(
             val completed = try {
                 when (val status = updateDownloader.status(id)) {
                     AppDownloadStatus.Missing -> {
-                        updateStatus = "Download was not found. Please check for updates and try again."
+                        updateStatus = context.getString(R.string.download_not_found)
                         updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                         downloadId = null
                         activeDownloadVersionCode = null
@@ -514,16 +553,16 @@ private fun TvExperience(
                     AppDownloadStatus.Complete -> {
                         val uri = updateDownloader.downloadedUri(id)
                         if (uri == null) {
-                            updateStatus = "Download completed, but the APK could not be opened."
+                            updateStatus = context.getString(R.string.download_open_failed)
                             updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                         } else {
                             val versionCode = activeDownloadVersionCode
                             if (versionCode == null) {
-                                updateStatus = "Downloaded APK version could not be verified. Please retry."
+                                updateStatus = context.getString(R.string.download_version_unverified)
                                 updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                             } else {
                                 completedDownload = versionCode to uri
-                                updateStatus = "Download complete. Opening installer…"
+                                updateStatus = context.getString(R.string.download_complete)
                                 requestInstall(uri)
                             }
                         }
@@ -532,7 +571,7 @@ private fun TvExperience(
                         true
                     }
                     is AppDownloadStatus.Failed -> {
-                        updateStatus = "APK download failed (error ${status.reason}). Check your connection and retry."
+                        updateStatus = context.getString(R.string.apk_download_failed, status.reason)
                         updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                         downloadId = null
                         activeDownloadVersionCode = null
@@ -541,9 +580,12 @@ private fun TvExperience(
                     is AppDownloadStatus.Running -> {
                         if (status.progress != null) {
                             updateProgress = status.progress
-                            updateStatus = "Downloading version ${(updateProgress * 100).toInt()}%…"
+                            updateStatus = context.getString(
+                                R.string.downloading_percent,
+                                (updateProgress * 100).toInt()
+                            )
                         } else {
-                            updateStatus = "Downloading version…"
+                            updateStatus = context.getString(R.string.downloading_version_unknown)
                         }
                         false
                     }
@@ -551,7 +593,10 @@ private fun TvExperience(
             } catch (failure: CancellationException) {
                 throw failure
             } catch (failure: Exception) {
-                updateStatus = "Unable to check download progress: ${failure.message ?: "unknown error"}"
+                updateStatus = context.getString(
+                    R.string.download_progress_failed,
+                    failure.message ?: context.getString(R.string.unknown_error)
+                )
                 updateDialog = TvUpdateDialogState.Error(updateStatus!!)
                 downloadId = null
                 activeDownloadVersionCode = null
@@ -610,7 +655,7 @@ private fun TvExperience(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "LIVE CHANNELS",
+                            stringResource(R.string.live_channels),
                             color = Color(0xFF4EDEA3),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold
@@ -620,13 +665,16 @@ private fun TvExperience(
                         OutlinedTextField(
                             value = query,
                             onValueChange = { query = it },
-                            placeholder = { Text("Search channels") },
+                            placeholder = { Text(stringResource(R.string.search_channels)) },
                             leadingIcon = {
                                 Icon(Icons.Default.Search, contentDescription = null)
                             },
                             trailingIcon = {
                                 IconButton(onClick = { searchActive = false }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close search")
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.close_search)
+                                    )
                                 }
                             },
                             singleLine = true,
@@ -658,13 +706,41 @@ private fun TvExperience(
                                 tint = Color(0xFFADC6FF)
                             )
                             Text(
-                                if (query.isBlank()) "Search channels" else query,
+                                if (query.isBlank()) stringResource(R.string.search_channels) else query,
                                 color = if (query.isBlank()) Color(0xFFC2C6D6) else Color(0xFFDEE2F3),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
+                    }
+                    Button(
+                        modifier = Modifier
+                            .focusRequester(languageFocusRequester)
+                            .onFocusChanged { languageButtonFocused = it.isFocused }
+                            .border(
+                                width = if (languageButtonFocused) 2.dp else 1.dp,
+                                color = if (languageButtonFocused) {
+                                    Color(0xFFADC6FF)
+                                } else {
+                                    Color(0xFF424754)
+                                },
+                                shape = RoundedCornerShape(50)
+                            ),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = Color(0xFFADC6FF)
+                        ),
+                        onClick = {
+                            val targetLanguage = if (activeLanguage == "bn") "en" else "bn"
+                            restoreLanguageFocus = true
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(targetLanguage)
+                            )
+                        }
+                    ) {
+                        Text(stringResource(R.string.language_switch))
                     }
                     IconButton(
                         onClick = { if (!loading) onRefresh() },
@@ -687,7 +763,7 @@ private fun TvExperience(
                     ) {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "Refresh playlists",
+                            contentDescription = stringResource(R.string.refresh_playlists),
                             tint = if (loading) Color(0xFF70788A) else Color(0xFFDEE2F3)
                         )
                     }
@@ -743,7 +819,7 @@ private fun TvExperience(
             if (favoriteChannels.isNotEmpty()) {
                 item {
                     TvChannelRow(
-                        title = "Favorite",
+                        title = stringResource(R.string.favorites),
                         channels = favoriteChannels,
                         favorites = favorites,
                         selectedChannelId = selectedChannelId,
@@ -756,7 +832,7 @@ private fun TvExperience(
             if (filteredPremiumChannels.isNotEmpty()) {
                 item(key = "premium_channel_section") {
                     TvChannelRow(
-                        title = "Premium Channel",
+                        title = stringResource(R.string.premium_channels),
                         channels = filteredPremiumChannels,
                         favorites = favorites,
                         selectedChannelId = selectedChannelId,
@@ -775,9 +851,9 @@ private fun TvExperience(
                             (it.resolution ?: 0) >= 720)
                 }
                 if (sectionChannels.isNotEmpty()) {
-                    item(key = section.title) {
+                    item(key = section.name) {
                         TvChannelRow(
-                            title = section.title,
+                            title = stringResource(section.titleRes),
                             channels = sectionChannels,
                             favorites = favorites,
                             selectedChannelId = selectedChannelId,
@@ -792,9 +868,9 @@ private fun TvExperience(
                 item {
                     Text(
                         if (channels.isEmpty() && premiumChannels.isEmpty()) {
-                            "No channels are available. Refresh to try again."
+                            stringResource(R.string.no_channels_available)
                         }
-                        else "No channels match your search.",
+                        else stringResource(R.string.no_search_results),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -814,11 +890,23 @@ private fun TvExperience(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("▲ ▼ ◀ ▶  Navigate", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
+            Text(
+                "▲ ▼ ◀ ▶  ${stringResource(R.string.navigate)}",
+                color = Color(0xFFC2C6D6),
+                style = MaterialTheme.typography.labelLarge
+            )
             Text("•", color = Color(0xFF70788A))
-            Text("OK  Select", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
+            Text(
+                stringResource(R.string.remote_select, stringResource(R.string.select)),
+                color = Color(0xFFC2C6D6),
+                style = MaterialTheme.typography.labelLarge
+            )
             Text("•", color = Color(0xFF70788A))
-            Text("BACK  Back", color = Color(0xFFC2C6D6), style = MaterialTheme.typography.labelLarge)
+            Text(
+                stringResource(R.string.remote_back, stringResource(R.string.back)),
+                color = Color(0xFFC2C6D6),
+                style = MaterialTheme.typography.labelLarge
+            )
         }
         }
         updateDialog?.let { dialog ->
@@ -830,9 +918,12 @@ private fun TvExperience(
                     Text(
                         when (dialog) {
                             is TvUpdateDialogState.Available ->
-                                if (dialog.mandatory) "Required update" else "Update available"
-                            is TvUpdateDialogState.UpToDate -> "App is up to date"
-                            is TvUpdateDialogState.Error -> "Update problem"
+                                stringResource(
+                                    if (dialog.mandatory) R.string.required_update
+                                    else R.string.update_available
+                                )
+                            is TvUpdateDialogState.UpToDate -> stringResource(R.string.app_up_to_date)
+                            is TvUpdateDialogState.Error -> stringResource(R.string.update_problem)
                         }
                     )
                 },
@@ -841,17 +932,25 @@ private fun TvExperience(
                         when (dialog) {
                             is TvUpdateDialogState.Available -> {
                                 Text(
-                                    "Version ${dialog.info.latestVersion} is available. " +
-                                        "Installed version code: ${dialog.installedVersionCode}."
+                                    stringResource(
+                                        R.string.update_version_details,
+                                        dialog.info.latestVersion,
+                                        dialog.installedVersionCode
+                                    )
                                 )
                                 if (dialog.info.releaseNotes.isNotEmpty()) {
-                                    Text("What’s new:\n${dialog.info.releaseNotes.joinToString("\n") { "• $it" }}")
+                                    Text(
+                                        stringResource(
+                                            R.string.whats_new,
+                                            dialog.info.releaseNotes.joinToString("\n") { "• $it" }
+                                        )
+                                    )
                                 }
                                 if (dialog.mandatory) {
-                                    Text("This update is required to continue using BDIX TV.")
+                                    Text(stringResource(R.string.required_update_message))
                                 }
                                 if (isDownloadingUpdate) {
-                                    Text(updateStatus ?: "Downloading update…")
+                                    Text(updateStatus ?: stringResource(R.string.downloading_update))
                                     CircularProgressIndicator(
                                         progress = { updateProgress },
                                         color = MaterialTheme.colorScheme.primary
@@ -859,11 +958,11 @@ private fun TvExperience(
                                 }
                             }
                             is TvUpdateDialogState.UpToDate ->
-                                Text("You are using the latest version (${dialog.version}).")
+                                Text(stringResource(R.string.up_to_date_version, dialog.version))
                             is TvUpdateDialogState.Error -> {
                                 Text(
                                     if (mandatoryUpdate && isDownloadingUpdate) {
-                                        updateStatus ?: "Retrying required update…"
+                                        updateStatus ?: stringResource(R.string.retrying_required_update)
                                     } else {
                                         dialog.message
                                     }
@@ -889,12 +988,14 @@ private fun TvExperience(
                                     }
                                     else startApkDownload(dialog.info)
                                 }) {
-                                    Text("Update now")
+                                    Text(stringResource(R.string.update_now))
                                 }
                             }
                         }
                         is TvUpdateDialogState.UpToDate -> {
-                            TextButton(onClick = { updateDialog = null }) { Text("OK") }
+                            TextButton(onClick = { updateDialog = null }) {
+                                Text(stringResource(R.string.ok))
+                            }
                         }
                         is TvUpdateDialogState.Error -> {
                             if (!isDownloadingUpdate) {
@@ -913,7 +1014,11 @@ private fun TvExperience(
                                         checkForUpdates()
                                     }
                                 }) {
-                                    Text(if (mandatoryUpdate) "Retry update" else "Retry")
+                                    Text(
+                                        stringResource(
+                                            if (mandatoryUpdate) R.string.retry_update else R.string.retry
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -923,12 +1028,16 @@ private fun TvExperience(
                     when (dialog) {
                         is TvUpdateDialogState.Available -> {
                             if (!dialog.mandatory && !isDownloadingUpdate) {
-                                TextButton(onClick = { updateDialog = null }) { Text("Later") }
+                                TextButton(onClick = { updateDialog = null }) {
+                                    Text(stringResource(R.string.later))
+                                }
                             }
                         }
                         is TvUpdateDialogState.Error -> {
                             if (!mandatoryUpdate && !isDownloadingUpdate) {
-                                TextButton(onClick = { updateDialog = null }) { Text("Close") }
+                                TextButton(onClick = { updateDialog = null }) {
+                                    Text(stringResource(R.string.close))
+                                }
                             }
                         }
                         is TvUpdateDialogState.UpToDate -> Unit
@@ -991,13 +1100,13 @@ private fun TvUpdateCard(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Update Available",
+                    stringResource(R.string.update_available_heading),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFDEE2F3)
                 )
                 Text(
-                    status ?: "Version $version is ready to install",
+                    status ?: stringResource(R.string.version_ready, version),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFC2C6D6)
                 )
@@ -1013,19 +1122,19 @@ private fun TvUpdateCard(
     }
 }
 
-private enum class TvChannelSection(val title: String) {
-    BANGLADESH("Bangladesh"),
-    INDIAN_BANGLA("Indian Bangla"),
-    INDIAN_MOVIES("Indian Movies"),
-    INDIAN_MUSIC("Indian Music"),
-    INDIAN_ENTERTAINMENT("Indian Entertainment"),
-    PAKISTANI("Pakistani"),
-    INTERNATIONAL("International"),
-    DOCUMENTARY_WILDLIFE("Documentary & Wildlife"),
-    KIDS("Kids"),
-    RELIGIOUS("Religious"),
-    SPORTS("Sports"),
-    OTHER("Other Channels");
+private enum class TvChannelSection(@param:StringRes val titleRes: Int) {
+    BANGLADESH(R.string.section_bangladesh),
+    INDIAN_BANGLA(R.string.section_indian_bangla),
+    INDIAN_MOVIES(R.string.section_indian_movies),
+    INDIAN_MUSIC(R.string.section_indian_music),
+    INDIAN_ENTERTAINMENT(R.string.section_indian_entertainment),
+    PAKISTANI(R.string.section_pakistani),
+    INTERNATIONAL(R.string.section_international),
+    DOCUMENTARY_WILDLIFE(R.string.section_documentary_wildlife),
+    KIDS(R.string.section_kids),
+    RELIGIOUS(R.string.section_religious),
+    SPORTS(R.string.section_sports),
+    OTHER(R.string.section_other);
 
     companion object {
         val hdOnlySections = setOf(BANGLADESH, INDIAN_BANGLA, INDIAN_MOVIES)
@@ -1096,7 +1205,7 @@ private fun TvChannelRow(
                 color = Color(0xFFDEE2F3)
             )
             Text(
-                "${channels.size} Live",
+                stringResource(R.string.live_count, channels.size),
                 modifier = Modifier
                     .padding(start = 14.dp)
                     .clip(CircleShape)
@@ -1108,7 +1217,7 @@ private fun TvChannelRow(
             )
             Spacer(Modifier.weight(1f))
             Text(
-                "Scroll Right",
+                stringResource(R.string.scroll_right),
                 color = Color(0xFFC2C6D6),
                 style = MaterialTheme.typography.labelLarge
             )
@@ -1233,7 +1342,7 @@ private fun TvChannelCard(
                             .padding(horizontal = 9.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            "● LIVE",
+                            stringResource(R.string.live),
                             color = Color(0xFF690005),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.ExtraBold
@@ -1264,7 +1373,11 @@ private fun TvChannelCard(
             ) {
                 DropdownMenuItem(
                     text = {
-                        Text(if (isFavorite) "Remove from Favorite" else "Add to Favorite")
+                        Text(
+                            stringResource(
+                                if (isFavorite) R.string.remove_favorite else R.string.add_favorite
+                            )
+                        )
                     },
                     leadingIcon = {
                         Icon(
@@ -1301,11 +1414,11 @@ private fun TvPlayer(
             .build()
     }
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
-    var isBuffering by remember { mutableStateOf(true) }
+    var hasPlaybackStarted by remember { mutableStateOf(false) }
     var playbackError by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(channel.id) {
         playerView?.hideController()
-        isBuffering = true
+        hasPlaybackStarted = false
         playbackError = null
         exoPlayer.playWhenReady = false
         exoPlayer.stop()
@@ -1317,12 +1430,18 @@ private fun TvPlayer(
     DisposableEffect(exoPlayer, lifecycleOwner) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                isBuffering = playbackState == Player.STATE_BUFFERING
+                if (playbackState == Player.STATE_READY) {
+                    hasPlaybackStarted = true
+                }
+            }
+
+            override fun onRenderedFirstFrame() {
+                hasPlaybackStarted = true
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                isBuffering = false
-                playbackError = "Unable to play this stream: ${error.errorCodeName}"
+                hasPlaybackStarted = false
+                playbackError = context.getString(R.string.stream_play_error, error.errorCodeName)
             }
         }
         val observer = LifecycleEventObserver { _, event ->
@@ -1369,7 +1488,7 @@ private fun TvPlayer(
             },
             modifier = Modifier.fillMaxSize()
         )
-        if (isBuffering && playbackError == null) {
+        if (!hasPlaybackStarted && playbackError == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1391,10 +1510,10 @@ private fun TvPlayer(
                 Text(message, color = MaterialTheme.colorScheme.error)
                 Button(onClick = {
                     playbackError = null
-                    isBuffering = true
+                    hasPlaybackStarted = false
                     exoPlayer.prepare()
                     exoPlayer.play()
-                }) { Text("Retry") }
+                }) { Text(stringResource(R.string.retry)) }
             }
         }
     }

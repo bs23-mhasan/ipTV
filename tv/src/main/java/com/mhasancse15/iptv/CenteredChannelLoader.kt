@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -101,7 +102,7 @@ fun CenteredChannelLoader(
             }
         }
         Text(
-            text = "Loading ${channelName}…",
+            text = stringResource(R.string.loading_channel, channelName),
             color = Color(0xFFDEE2F3),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium

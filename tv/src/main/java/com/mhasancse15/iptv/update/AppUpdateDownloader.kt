@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import com.mhasancse15.iptv.R
 
 sealed interface AppDownloadStatus {
     data class Running(val progress: Float?) : AppDownloadStatus
@@ -19,7 +20,7 @@ class AppUpdateDownloader(context: Context) {
     fun enqueue(info: AppUpdateInfo): Long {
         val request = DownloadManager.Request(Uri.parse(info.downloadUrl))
             .setTitle("${info.appName} ${info.latestVersion}")
-            .setDescription("Downloading Android TV update")
+            .setDescription(appContext.getString(R.string.downloading_update))
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalFilesDir(
                 appContext,
