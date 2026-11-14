@@ -1,8 +1,8 @@
 {
-  "total": 70,
+  "total": 68,
   "byCountry": {
     "Bangladesh": 20,
-    "India": 50
+    "India": 48
   },
   "channels": [
     {
@@ -396,16 +396,6 @@
       "url": "https://box.bbaria.net:8083/Jalsha_Movie/tracks-v1a1/mono.m3u8"
     },
     {
-      "name": "Jalsha Movies HD (1080p)",
-      "id": "JalshaMovies.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://i.imgur.com/25eWjX2.png",
-      "group": "Movies",
-      "geoBlocked": false,
-      "url": "http://103.135.253.32:8080/Jalsha_movies-HD/index.m3u8"
-    },
-    {
       "name": "Kabaddi 24x7 (720p)",
       "id": "Kabaddi24x7.in@SD",
       "country": "India",
@@ -596,16 +586,6 @@
       "url": "http://103.135.253.32:8080/STAR-JALSHA-HD/index.m3u8"
     },
     {
-      "name": "Star Sports Select 2 HD (720p)",
-      "id": "StarSportsSelect2.in@HD",
-      "country": "India",
-      "resolution": 720,
-      "logo": "https://i.imgur.com/FtRT73R.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://tvsen7.aynascope.net/ssport2hd/index.m3u8"
-    },
-    {
       "name": "Travelxp 4K HDR (2160p) [Geo-blocked]",
       "id": "Travelxp.in@4KHDR",
       "country": "India",
@@ -686,14 +666,14 @@
       "url": "https://server.zillarbarta.com/zbmusic/index.m3u8"
     },
     {
-      "name": "Zee Bangla HD (1080p)",
+      "name": "Zee Bangla HD (720p)",
       "id": "ZeeBangla.in@HD",
       "country": "India",
-      "resolution": 1080,
+      "resolution": 720,
       "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ZEE_BANGLA/images/LOGO_HD/LOGO_HD_image.png",
       "group": "Entertainment",
       "geoBlocked": false,
-      "url": "https://livetv.shamon-cable.net:8443/ZEE-Bangla/index.m3u8"
+      "url": "https://raw.githubusercontent.com/amazeyourself/adaptive-streams/refs/heads/main/streams/in/YuppTV/ZeeBanglaHD.m3u8"
     },
     {
       "name": "Zodiak TV (1080p)",
