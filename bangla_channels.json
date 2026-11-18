@@ -1,8 +1,8 @@
 {
-  "total": 68,
+  "total": 70,
   "byCountry": {
     "Bangladesh": 20,
-    "India": 48
+    "India": 50
   },
   "channels": [
     {
@@ -283,7 +283,7 @@
       "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_COLORS_BANGLA/images/LOGO_HD/image.png",
       "group": "Entertainment",
       "geoBlocked": false,
-      "url": "http://103.165.93.31:8095/colorsBangla/index.m3u8"
+      "url": "http://103.135.253.32:8080/COLORS-BANGLA-HD/index.m3u8"
     },
     {
       "name": "CTVN AKD Plus (1080p)",
@@ -453,7 +453,7 @@
       "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_BANGLA/images/LOGO_HD/image.png",
       "group": "News",
       "geoBlocked": false,
-      "url": "https://n18syndication.akamaized.net/bpk-tv/News18_Bangla_NW18_MOB/output01/master.m3u8"
+      "url": "https://amg01448-samsungin-news18bangla-samsungin-ad-qy.amagi.tv/playlist/amg01448-samsungin-news18bangla-samsungin/playlist.m3u8"
     },
     {
       "name": "NK TV Bangla (1080p)",
@@ -564,6 +564,26 @@
       "group": "Entertainment",
       "geoBlocked": false,
       "url": "http://27.124.71.27/Sony_Aath/index.m3u8"
+    },
+    {
+      "name": "Sony Sports Ten 3 Hindi (1080p)",
+      "id": "SonySportsTen3Hindi.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/GNLZZGG0025TCMR.png?lock=720x540",
+      "group": "Sports",
+      "geoBlocked": false,
+      "url": "https://r2.amml.in/sony-ten-3-hd/live.m3u8"
+    },
+    {
+      "name": "Sony Yay! (1080p)",
+      "id": "SonyYay.in@SD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s159100_ld_h15_aa.png?lock=720x540",
+      "group": "Animation;Kids",
+      "geoBlocked": false,
+      "url": "https://r2.amml.in/sony-yay/live.m3u8"
     },
     {
       "name": "Star Jalsha (1080p) [Geo-blocked]",
