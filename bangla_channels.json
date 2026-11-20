@@ -1,8 +1,8 @@
 {
-  "total": 71,
+  "total": 73,
   "byCountry": {
     "Bangladesh": 20,
-    "India": 51
+    "India": 53
   },
   "channels": [
     {
@@ -353,7 +353,7 @@
       "logo": "https://dtil.tmsimg.com/assets/GNLZZGG002E9LQS.png?lock=720x540",
       "group": "Sports",
       "geoBlocked": false,
-      "url": "https://livetv.shamon-cable.net:8443/Eurosport-HD/index.m3u8"
+      "url": "http://116.90.120.149:8000/play/a118/index.m3u8"
     },
     {
       "name": "Friends TV (1080p)",
@@ -434,6 +434,26 @@
       "group": "General",
       "geoBlocked": false,
       "url": "https://stream.ottlive.co.in/ktvbangla/index.m3u8"
+    },
+    {
+      "name": "National Geographic (India) HD (1080p)",
+      "id": "NationalGeographic.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://dtil.tmsimg.com/assets/s143574_ld_h15_aa.png?lock=720x540",
+      "group": "Documentary",
+      "geoBlocked": false,
+      "url": "http://116.90.120.149:8000/play/a115/index.m3u8"
+    },
+    {
+      "name": "National Geographic Wild (India) HD (1080p)",
+      "id": "NationalGeographicWild.in@HD",
+      "country": "India",
+      "resolution": 1080,
+      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NAT_GEO_WILD/images/LOGO_HD/image.png",
+      "group": "Documentary",
+      "geoBlocked": false,
+      "url": "http://116.90.120.149:8000/play/a11h/index.m3u8"
     },
     {
       "name": "News Live Bangla (1080p)",
