@@ -1,8 +1,8 @@
 {
-  "total": 80,
+  "total": 70,
   "byCountry": {
     "Bangladesh": 20,
-    "India": 60
+    "India": 50
   },
   "channels": [
     {
@@ -326,16 +326,6 @@
       "url": "https://cdn.pishow.tv/ott/live/1456/master.m3u8"
     },
     {
-      "name": "Discovery Channel (India) HD (1080p)",
-      "id": "DiscoveryChannel.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://dtil.tmsimg.com/assets/s159106_ld_h15_aa.png?lock=720x540",
-      "group": "Entertainment",
-      "geoBlocked": false,
-      "url": "http://103.135.253.32:8080/DISCOVERY/index.m3u8"
-    },
-    {
       "name": "Enterr 10 Bangla (720p)",
       "id": "Enterr10Bangla.in@SD",
       "country": "India",
@@ -344,16 +334,6 @@
       "group": "Entertainment",
       "geoBlocked": false,
       "url": "https://amg01448-samsungin-enterr10bangla-samsungin-ad-gg.amagi.tv/playlist/amg01448-samsungin-enterr10bangla-samsungin/playlist.m3u8"
-    },
-    {
-      "name": "Eurosport (India) HD (1080p)",
-      "id": "Eurosport.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://dtil.tmsimg.com/assets/GNLZZGG002E9LQS.png?lock=720x540",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a118/index.m3u8"
     },
     {
       "name": "Friends TV (1080p)",
@@ -434,26 +414,6 @@
       "group": "General",
       "geoBlocked": false,
       "url": "https://stream.ottlive.co.in/ktvbangla/index.m3u8"
-    },
-    {
-      "name": "National Geographic (India) HD (1080p)",
-      "id": "NationalGeographic.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://dtil.tmsimg.com/assets/s143574_ld_h15_aa.png?lock=720x540",
-      "group": "Documentary",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a115/index.m3u8"
-    },
-    {
-      "name": "National Geographic Wild (India) HD (1080p)",
-      "id": "NationalGeographicWild.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NAT_GEO_WILD/images/LOGO_HD/image.png",
-      "group": "Documentary",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a11h/index.m3u8"
     },
     {
       "name": "News Live Bangla (1080p)",
@@ -596,26 +556,6 @@
       "url": "http://27.124.71.27/Sony_Aath/index.m3u8"
     },
     {
-      "name": "Sony Sports Ten 1 HD (1080p)",
-      "id": "SonySportsTen1.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SONY_SPORTS_TEN_1/images/LOGO_HD/image.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a11t/index.m3u8"
-    },
-    {
-      "name": "Sony Sports Ten 2 HD (1080p)",
-      "id": "SonySportsTen2.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SONY_SPORTS_TEN_2/images/LOGO_HD/image.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a137/index.m3u8"
-    },
-    {
       "name": "Sony Sports Ten 3 Hindi (1080p)",
       "id": "SonySportsTen3Hindi.in@SD",
       "country": "India",
@@ -656,36 +596,6 @@
       "url": "http://103.135.253.32:8080/STAR-JALSHA-HD/index.m3u8"
     },
     {
-      "name": "Star Sports 1 HD (1080p)",
-      "id": "StarSports1.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://i.imgur.com/E5jjKHI.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a11x/index.m3u8"
-    },
-    {
-      "name": "Star Sports 1 Hindi HD (1080p)",
-      "id": "StarSports1Hindi.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_STAR_SPORTS_1_HD_HINDI/images/LOGO_HD/image.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a122/index.m3u8"
-    },
-    {
-      "name": "Star Sports 2 HD (1080p)",
-      "id": "StarSports2.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_STAR_SPORTS_2/images/LOGO_HD/image.png",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a120/index.m3u8"
-    },
-    {
       "name": "Travelxp 4K HDR (2160p) [Geo-blocked]",
       "id": "Travelxp.in@4KHDR",
       "country": "India",
@@ -724,26 +634,6 @@
       "group": "Undefined",
       "geoBlocked": false,
       "url": "https://stream.ottlive.co.in/ubangla/index.m3u8"
-    },
-    {
-      "name": "Unite8 Sports 1 HD (1080p)",
-      "id": "Unite8Sports1.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ZEE_CAFE_HD/images/LOGO_HD/LOGO_HD_F6ILcp4Kk_UNITE8-SPORTS-1_HD_264X144.webp",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a125/index.m3u8"
-    },
-    {
-      "name": "Unite8 Sports 2 HD (1080p)",
-      "id": "Unite8Sports2.in@HD",
-      "country": "India",
-      "resolution": 1080,
-      "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_SYMANDFLIX_HD/images/LOGO_HD/LOGO_HD_qVrE3q5rN_UNITE8-SPORTS-2_HD_264X144.webp",
-      "group": "Sports",
-      "geoBlocked": false,
-      "url": "http://116.90.120.149:8000/play/a129/index.m3u8"
     },
     {
       "name": "ZB Bhakti (720p)",
@@ -794,6 +684,16 @@
       "group": "Entertainment",
       "geoBlocked": false,
       "url": "https://raw.githubusercontent.com/amazeyourself/adaptive-streams/refs/heads/main/streams/in/YuppTV/ZeeBanglaHD.m3u8"
+    },
+    {
+      "name": "ZillarBarta News (720p)",
+      "id": "ZillarBartaNews.in@HD",
+      "country": "India",
+      "resolution": 720,
+      "logo": "https://jiotvimages.cdn.jio.com/dare_images/images/zillarbarta.png",
+      "group": "Classic;News",
+      "geoBlocked": false,
+      "url": "https://server.zillarbarta.com/zillarbarta/index.m3u8"
     },
     {
       "name": "Zodiak TV (1080p)",
